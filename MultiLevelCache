@@ -1,0 +1,128 @@
+package com.telio;
+import java.util.*;
+
+interface ILevelCache<Key, Value> {
+    void set(Key key, Value value);
+    Value get(Key key);
+}
+
+class CacheProvider<Key, Value> {
+    private final Map<Key, Value> storage;
+    private final Integer capacity;
+
+    public CacheProvider(Integer capacity) {
+        this.capacity = capacity;
+        this.storage = new LinkedHashMap<Key, Value>(capacity, 0.75f, true){
+            protected boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > capacity;
+            }
+        };
+    }
+
+    public Map<Key, Value> getStorage() {
+        return storage;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void set(Key key, Value value) {
+        this.storage.put(key, value);
+    }
+
+    public Value get(Key key) {
+        return this.storage.get(key);
+    }
+}
+
+//DefaultLevelCache is a cache at one layer
+class DefaultLevelCache<Key, Value> implements ILevelCache<Key, Value> {
+    private final CacheProvider<Key, Value> cacheProvider;
+    private final DefaultLevelCache<Key, Value> next;
+
+    public DefaultLevelCache(CacheProvider<Key, Value> cacheProvider, DefaultLevelCache<Key, Value> next) {
+        this.cacheProvider = cacheProvider;
+        this.next = next;
+    }
+
+    public CacheProvider<Key, Value> getCacheProvider() {
+        return cacheProvider;
+    }
+
+    public DefaultLevelCache<Key, Value> getNext() {
+        return next;
+    }
+
+
+    @Override
+    public void set(Key key, Value value) {
+        Value curLevelValue = cacheProvider.get(key);
+        if (!value.equals(curLevelValue)) {
+            cacheProvider.set(key, value);
+        }
+        if(next != null){
+            next.set(key, value);
+        }
+    }
+
+    @Override
+    public Value get(Key key) {
+        Value curLevelValue = cacheProvider.get(key);
+        if (curLevelValue == null && next != null) {
+            curLevelValue = next.get(key);
+            if (curLevelValue != null) {
+                cacheProvider.set(key, curLevelValue);
+            }
+        }
+        return curLevelValue;
+    }
+}
+
+class CacheService<Key, Value> {
+    private final ILevelCache<Key, Value> multiLevelCache;
+    public CacheService(final DefaultLevelCache<Key, Value> multiLevelCache) {
+        this.multiLevelCache = multiLevelCache;
+    }
+
+    public ILevelCache<Key, Value> getMultiLevelCache() {
+        return multiLevelCache;
+    }
+
+    public void set(final Key key, final Value value) {
+        multiLevelCache.set(key, value);
+    }
+
+    public Value get(final Key key) {
+        return multiLevelCache.get(key);
+    }
+}
+
+public class MultiLevelCache {
+    public static void main(String[] args) {
+        CacheProvider<String, String> c1 = new CacheProvider<>(10);
+        CacheProvider<String, String> c2 = new CacheProvider<>(20);
+        CacheProvider<String, String> c3 = new CacheProvider<>(30);
+
+        DefaultLevelCache<String, String> l3Cache = new DefaultLevelCache<>(c3, null);
+        DefaultLevelCache<String, String> l2Cache = new DefaultLevelCache<>(c2, l3Cache);
+        DefaultLevelCache<String, String> l1Cache = new DefaultLevelCache<>(c1, l2Cache);
+
+        //cacheService points to l1Cache -> l2Cache -> l3Cache -> null
+        CacheService<String, String> cacheService = new CacheService<>(l1Cache);
+
+        cacheService.set("k1", "v1");
+        cacheService.set("k2", "v2");
+
+        String r1 = cacheService.get("k1");
+        System.out.println("Response 1: " + r1);
+
+        String r2 = cacheService.get("k1");
+        System.out.println("Response 2: " + r2);
+
+        // Explicitly remove key from l1
+        c1.set("k1", null);
+        String r1AfterRemovalFromL1 = cacheService.get("k1");
+        System.out.println("After removal Response: " + r1AfterRemovalFromL1);
+    }
+}

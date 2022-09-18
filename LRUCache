@@ -1,0 +1,107 @@
+package com.telio;
+import java.util.*;
+
+class ListNode<K,V> {
+    ListNode<K,V> prev;
+    ListNode<K,V> next;
+    K key;
+    V value;
+    public ListNode(K key, V value){
+        this.key = key;
+        this.value = value;
+    }
+}
+public class LRUCache {
+    private final Map<Integer,ListNode<Integer,Integer>> cache = new HashMap<>();
+    private ListNode<Integer,Integer> front = null; //old
+    private ListNode<Integer,Integer> rear = null; //new
+    private final Integer cacheSize;
+
+    public LRUCache(Integer capacity) {
+        this.cacheSize = capacity;
+    }
+    public static void main(String args[]) {
+        LRUCache lru = new LRUCache(3);
+        lru.put(12, 100);
+        lru.put(14, 200);
+        lru.put(16, 300);
+        lru.get(14);
+        lru.put(18, 400);
+        lru.printList();
+        lru.put(20, 700);
+        lru.printList();
+        lru.get(18);
+        /*System.out.println(lru.get(12));
+        System.out.println(lru.get(14));
+        System.out.println(lru.get(16));
+        System.out.println(lru.get(18));*/
+
+        //lru.put(16,900);
+
+    }
+
+    private void put(Integer key, Integer value) {
+        if(cache.containsKey(key)) {
+            ListNode<Integer, Integer> node = cache.get(key);
+            cache.remove(key);
+            /*if (front.key == key) {
+                front = front.next;
+            }*/
+            node.value = value;
+            rear.next = node;
+            node.prev = rear;
+            node.next = null;
+            rear = node;
+            cache.put(key, node);
+            return;
+        }
+        ListNode<Integer, Integer> newNode = new ListNode<>(key, value);
+        if (cache.size() < cacheSize) {
+            if (front == null && rear == null) {
+                front = newNode;
+            } else {
+                rear.next = newNode;
+                newNode.prev = rear;
+            }
+        } else {
+            System.out.println("remove oldest entry");
+            cache.remove(front.key);
+            front = front.next;
+            front.prev = null;
+
+            rear.next = newNode;
+            newNode.prev = rear;
+        }
+        rear = newNode;
+        cache.put(key, newNode);
+    }
+
+    private Integer get(Integer key) {
+        printList();
+        if (cache.containsKey(key)) {
+            ListNode<Integer,Integer> node = cache.get(key);
+            ListNode<Integer,Integer> prev = node.prev;
+            ListNode<Integer,Integer> next = node.next;
+            prev.next = next;
+            next.prev = prev;
+            node.next = null;
+            rear.next = node;
+            node.prev = rear;
+            rear = node;
+            printList();
+            return node.value;
+        }
+        return -1;
+    }
+
+    void printList() {
+        if(front == null || rear == null) return;
+        ListNode<Integer,Integer> current = front;
+        while (current != null) {
+            System.out.print(current.key);
+            current = current.next;
+            System.out.print(" -> ");
+        }
+        System.out.println("null");
+    }
+}

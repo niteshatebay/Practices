@@ -1,0 +1,335 @@
+package com.telio;
+import java.util.*;
+
+enum VehicleType {
+    SUV,
+    SEDAN,
+    HATCHBACK;
+}
+
+class Customer {
+    private Integer customerId;
+    private String customerName;
+
+    public Customer(Integer customerId, String customerName) {
+        this.customerId = customerId;
+        this.customerName = customerName;
+    }
+
+    public Integer getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Integer customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "customerId=" + customerId +
+                ", customerName='" + customerName + '\'' +
+                '}';
+    }
+}
+
+class BookingDetails {
+    private Integer bookingId;
+    private Customer customer;
+    private Integer startTime;
+    private Integer endTime;
+
+    public BookingDetails(Integer bookingId, Customer customer, Integer startTime, Integer endTime) {
+        this.bookingId = bookingId;
+        this.customer = customer;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public Integer getBookingId() {
+        return bookingId;
+    }
+
+    public void setBookingId(Integer bookingId) {
+        this.bookingId = bookingId;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public Integer getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Integer startTime) {
+        this.startTime = startTime;
+    }
+
+    public Integer getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Integer endTime) {
+        this.endTime = endTime;
+    }
+
+    @Override
+    public String toString() {
+        return "BookingDetails{" +
+                "bookingId=" + bookingId +
+                ", customer=" + customer +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                '}';
+    }
+}
+
+class VehicleInfo {
+    private VehicleType vehicleType;
+    private double pricePerHour;
+    private Integer vehicleId;
+    private String branch;
+    private List<BookingDetails> bookingDetails;
+    private int[] bookingHours;
+
+    public VehicleInfo(VehicleType vehicleType, int vehicleId, String branch) {
+        this.vehicleType = vehicleType;
+        this.vehicleId = vehicleId;
+        this.branch = branch;
+        this.bookingDetails = new ArrayList<>();
+        bookingHours = new int[24];
+        Arrays.fill(bookingHours, -1);
+    }
+
+    public List<BookingDetails> getBookingDetails() {
+        return bookingDetails;
+    }
+
+    public void setBookingDetails(List<BookingDetails> bookingDetails) {
+        this.bookingDetails = bookingDetails;
+    }
+
+    public int[] getBookingHours() {
+        return bookingHours;
+    }
+
+    public void setBookingHours(int[] bookingHours) {
+        this.bookingHours = bookingHours;
+    }
+
+    public VehicleType getVehicleType() {
+        return vehicleType;
+    }
+
+    public void setVehicleType(VehicleType vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
+    public double getPricePerHour() {
+        return pricePerHour;
+    }
+
+    public void setPricePerHour(double pricePerHour) {
+        this.pricePerHour = pricePerHour;
+    }
+
+    public Integer getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(Integer vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    @Override
+    public String toString() {
+        return "VehicleInfo{" +
+                "vehicleType=" + vehicleType +
+                ", pricePerHour=" + pricePerHour +
+                ", vehicleId=" + vehicleId +
+                ", branch='" + branch +
+                '}';
+    }
+}
+
+public class CarRental {
+    Map<String, List<VehicleInfo>> branchToVehicleInfos;
+    PriorityQueue<VehicleInfo> searchVehicle;
+    static Integer bookingIdCount = 99;
+
+    public CarRental() {
+        branchToVehicleInfos = new HashMap<>();
+        searchVehicle = getVehicleQueue();
+    }
+
+    public static void main(String[] args) {
+        CarRental carRental = new CarRental();
+        carRental.addBranch("Kormangala");
+        carRental.addVehicle(123, VehicleType.HATCHBACK, "Kormangala");
+        carRental.allocatePrice("Kormangala", VehicleType.HATCHBACK, 150);
+        carRental.addVehicle(456, VehicleType.SEDAN, "Kormangala");
+        carRental.allocatePrice("Kormangala", VehicleType.SEDAN, 200);
+        carRental.addVehicle(789, VehicleType.SUV, "Kormangala");
+        carRental.allocatePrice("Kormangala", VehicleType.SUV, 100);
+
+        carRental.addBranch("Indiranagar");
+        carRental.addVehicle(100, VehicleType.HATCHBACK, "Indiranagar");
+        carRental.allocatePrice("Indiranagar", VehicleType.HATCHBACK, 20);
+        carRental.addVehicle(200, VehicleType.SEDAN, "Indiranagar");
+        carRental.allocatePrice("Indiranagar", VehicleType.SEDAN, 70);
+        carRental.addVehicle(300, VehicleType.SUV, "Indiranagar");
+        carRental.allocatePrice("Indiranagar", VehicleType.SUV, 90);
+
+        carRental.addBranch("Bellandur");
+        carRental.addVehicle(500, VehicleType.HATCHBACK, "Bellandur");
+        carRental.allocatePrice("Bellandur", VehicleType.HATCHBACK, 900);
+        carRental.addVehicle(600, VehicleType.SEDAN, "Bellandur");
+        carRental.allocatePrice("Bellandur", VehicleType.SEDAN, 600);
+        carRental.addVehicle(700, VehicleType.SUV, "Bellandur");
+        carRental.allocatePrice("Bellandur", VehicleType.SUV, 500);
+
+        carRental.bookVehicle(VehicleType.SEDAN, 10, 12, 900, "Nitesh");
+        carRental.bookVehicle(VehicleType.SEDAN, 10, 12, 901, "Kumar");
+
+        /*Scanner in = new Scanner(System.in);
+        boolean done = false;
+        while(!done) {
+            System.out.println("Book your vehicle:");
+            System.out.println("Select vehicle type: Press 1 for HATCHBACK \t Press 2 for SEDAN \t Press 3 for SUV");
+            VehicleType vehicleType = null;
+            switch (in.nextInt()) {
+                case 1: vehicleType = VehicleType.HATCHBACK;
+                        break;
+                case 2: vehicleType = VehicleType.SEDAN;
+                        break;
+                case 3: vehicleType = VehicleType.SUV;
+                        break;
+            }
+            System.out.println("Enter start time:");
+            Integer start = in.nextInt();
+            System.out.println("Enter end time:");
+            Integer end = in.nextInt();
+            System.out.println("Enter customer id:");
+            Integer customerId = in.nextInt();
+            System.out.println("Enter customer name:");
+            String name = in.next();
+            carRental.bookVehicle(vehicleType, start, end, customerId, name);
+            System.out.println("Are you done? \n Press 1 for Yes \n Press 2 for No");
+            done = in.nextInt() == 1;
+        }*/
+        System.out.println();
+    }
+
+    private Integer getNextBookingId() {
+        bookingIdCount += 1;
+        return bookingIdCount;
+    }
+
+    private PriorityQueue<VehicleInfo> getVehicleQueue() {
+        return new PriorityQueue<>(Comparator.comparingDouble(VehicleInfo::getPricePerHour));
+        //return new PriorityQueue<>((a, b) -> (int) (a.getPricePerHour() - b.getPricePerHour()));
+    }
+
+    private void addBranch(String branchName) {
+        if(branchName == null || branchName.length() == 0) {
+            System.out.println("Branch name can't be null or empty");
+            return;
+        }
+        if(branchToVehicleInfos.containsKey(branchName)) {
+            System.out.println("This branch is already added: " + branchName);
+            return;
+        }
+        branchToVehicleInfos.put(branchName, new ArrayList<>());
+    }
+
+    private void addVehicle(Integer vehicleId, VehicleType vehicleType, String branchName) {
+        if(!branchToVehicleInfos.containsKey(branchName)) {
+            System.out.println("This branch is not available: " + branchName);
+            return;
+        }
+        branchToVehicleInfos.get(branchName).add(new VehicleInfo(vehicleType, vehicleId, branchName));
+    }
+
+    private void allocatePrice(String branchName, VehicleType vehicleType, double price) {
+        if(!branchToVehicleInfos.containsKey(branchName)) {
+            System.out.println("This branch is not available: " + branchName);
+            return;
+        }
+        List<VehicleInfo> vehicleInfos = branchToVehicleInfos.get(branchName);
+        for(VehicleInfo vehicleInfo : vehicleInfos) {
+            if(vehicleInfo.getVehicleType() == vehicleType) {
+                vehicleInfo.setPricePerHour(price);
+                searchVehicle.add(vehicleInfo);
+            }
+        }
+    }
+
+
+    private BookingDetails bookVehicle(VehicleType vehicleType, Integer startTime, Integer endTime, Integer customerId, String customerName) {
+        if(startTime < 0 || startTime > 23 || endTime < 0 || endTime > 23 || startTime >= endTime) {
+            System.out.println("Invalid booking time");
+            return null;
+        }
+        BookingDetails bookingDetail = null;
+        if(searchVehicle.size() == 0) {
+            System.out.println("No vehicle available");
+            return null;
+        }
+        PriorityQueue<VehicleInfo> temp = getVehicleQueue();
+        VehicleInfo vehicleInfo = null;
+        while (searchVehicle.size() != 0) {
+            vehicleInfo = searchVehicle.poll();
+            temp.add(vehicleInfo);
+            if(vehicleInfo.getVehicleType() != vehicleType) {
+                continue;
+            }
+            boolean booked = false;
+            int i = startTime;
+            while (i <= endTime) {
+                if(vehicleInfo.getBookingHours()[i] != -1) {
+                    booked = true;
+                    break;
+                }
+                i++;
+            }
+            if(!booked) {
+                Customer customer = new Customer(customerId, customerName);
+                int bookingId = getNextBookingId();
+                bookingDetail = new BookingDetails(bookingId, customer, startTime, endTime);
+                vehicleInfo.getBookingDetails().add(bookingDetail);
+                Arrays.fill(vehicleInfo.getBookingHours(), startTime, endTime+1, bookingId);
+                break;
+            }
+        }
+        while (temp.size() != 0) {
+            searchVehicle.add(temp.poll());
+        }
+        if(bookingDetail == null) {
+            System.out.println("No vehicle is available");
+        } else {
+            System.out.println("Booking details: " + bookingDetail + "\n" + vehicleInfo);
+        }
+        return bookingDetail;
+    }
+}

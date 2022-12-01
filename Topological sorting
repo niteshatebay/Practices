@@ -1,0 +1,40 @@
+import java.util.*;
+
+public class Bandwidth {
+    public static void main(String[] args) {
+        int n = 6;
+        LinkedList<Integer>[] adj = new LinkedList[n];
+        for(int i=0; i<n; i++) {
+            adj[i] = new LinkedList<>();
+        }
+        adj[5].add(2);
+        adj[5].add(0);
+        adj[4].add(0);
+        adj[4].add(1);
+        adj[3].add(1);
+        adj[2].add(3);
+        int[] inDegree = new int[n];
+        for(int i=0; i<n; i++) {
+            for(Integer in : adj[i]) {
+                inDegree[in]++;
+            }
+        }
+        Queue<Integer> queue = new LinkedList<>();
+        for(int i=0; i<n; i++) {
+            if(inDegree[i] == 0) {
+                queue.add(i);
+            }
+        }
+        while (!queue.isEmpty()) {
+            Integer curr = queue.poll();
+            System.out.println(curr + " ");
+            for(Integer in : adj[curr]) {
+                inDegree[in]--;
+                if(inDegree[in]==0) {
+                    queue.add(in);
+                }
+            }
+        }
+        System.out.println();
+    }
+}

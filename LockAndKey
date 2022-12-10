@@ -1,0 +1,101 @@
+collect keys and open door
+^ -- starting point, ' ' -- move, small alphabet keys and big alphabet is door
+
+class Move {
+    int row;
+    int col;
+    int steps;
+
+    public Move(int row, int col, int steps) {
+        this.row = row;
+        this.col = col;
+        this.steps = steps;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public int getSteps() {
+        return steps;
+    }
+}
+
+public class LockKey {
+    public static void main(String[] args) {
+        //["@.a..","###.#","b.A.B"]
+        char[][] matrix = {{'^', ' ', 'a', ' ', ' '},
+                           {'#', '#', '#', ' ', '#',},
+                           {'b', ' ', 'A', ' ', 'B'}};
+        int startX = 0, startY = 0;
+        Queue<Move> queue = new LinkedList<>();
+        queue.add(new Move(startX, startY, 0));
+        Set<Character> keys = new HashSet<>();
+        int maxStep = 0;
+        while (!queue.isEmpty()) {
+            Move curr = queue.poll();
+            int x = curr.getRow();
+            int y = curr.getCol();
+            matrix[x][y] = '#';
+            int step = curr.getSteps();
+            maxStep = Math.max(step, maxStep);
+            if(isValidCell(matrix, x-1, y) && matrix[x-1][y] != '#') {
+                if(isDoor(matrix[x-1][y]) && keys.contains(Character.toLowerCase(matrix[x-1][y]))) {
+                    queue.add(new Move(x-1, y, step+1));
+                } else if(isKey(matrix[x-1][y])) {
+                    keys.add(matrix[x-1][y]);
+                    queue.add(new Move(x-1, y, step+1));
+                } else if(matrix[x-1][y] == ' ') {
+                    queue.add(new Move(x-1, y, step+1));
+                }
+            }
+            if(isValidCell(matrix, x+1, y) && matrix[x+1][y] != '#') {
+                if(isDoor(matrix[x+1][y]) && keys.contains(Character.toLowerCase(matrix[x+1][y]))) {
+                    queue.add(new Move(x+1, y, step+1));
+                } else if(isKey(matrix[x+1][y])) {
+                    keys.add(matrix[x+1][y]);
+                    queue.add(new Move(x+1, y, step+1));
+                } else if(matrix[x+1][y] == ' ') {
+                    queue.add(new Move(x+1, y, step+1));
+                }
+            }
+            if(isValidCell(matrix, x, y-1) && matrix[x][y-1] != '#') {
+                if(isDoor(matrix[x][y-1]) && keys.contains(Character.toLowerCase(matrix[x][y-1]))) {
+                    queue.add(new Move(x, y-1, step+1));
+                } else if(isKey(matrix[x][y-1])) {
+                    keys.add(matrix[x][y-1]);
+                    queue.add(new Move(x, y-1, step+1));
+                } else if(matrix[x][y-1] == ' ') {
+                    queue.add(new Move(x, y-1, step+1));
+                }
+            }
+            if(isValidCell(matrix, x, y+1) && matrix[x][y+1] != '#') {
+                if(isDoor(matrix[x][y+1]) && keys.contains(Character.toLowerCase(matrix[x][y+1]))) {
+                    queue.add(new Move(x, y+1, step+1));
+                } else if(isKey(matrix[x][y+1])) {
+                    keys.add(matrix[x][y+1]);
+                    queue.add(new Move(x, y+1, step+1));
+                } else if(matrix[x][y+1] == ' ') {
+                    queue.add(new Move(x, y+1, step+1));
+                }
+            }
+        }
+        System.out.println("steps: " + maxStep);
+    }
+
+    static boolean isDoor(char ch) {
+        return ch >= 'A' && ch <= 'Z';
+    }
+
+    static boolean isKey(char ch) {
+        return ch >= 'a' && ch <= 'z';
+    }
+
+    static boolean isValidCell(char[][] matrix, int i, int j) {
+        return i >= 0 && j >=0 && i < matrix.length && j < matrix[0].length;
+    }
+}

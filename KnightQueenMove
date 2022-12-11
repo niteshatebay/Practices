@@ -1,0 +1,51 @@
+import java.util.LinkedList;
+import java.util.Queue;
+
+class Move {
+    int x;
+    int y;
+    int steps;
+
+    public Move(int x, int y, int steps) {
+        this.x = x;
+        this.y = y;
+        this.steps = steps;
+    }
+}
+public class Knight {
+
+    static int[][] DIRECTIONS = new int[][] {{2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+    public static void main(String[] args) {
+        //queen position (5,5)
+        System.out.println(getMinSteps(5,5));
+    }
+
+    static int getMinSteps(int i, int j) {
+        int[][] board = new int[8][8];
+        //int minStep = 0;
+        Queue<Move> queue = new LinkedList<>();
+        queue.add(new Move(0,0, 0)); //suppose knight starting position (0,0)
+        while (!queue.isEmpty()) {
+            Move curr = queue.poll();
+            int currX = curr.x;
+            int currY = curr.y;
+            int step = curr.steps;
+            if(currX == i && currY == j) {
+                return step;
+            }
+            board[currX][currY] = -1; //mark visited
+            for(int[] dir : DIRECTIONS) {
+                int x = currX + dir[0];
+                int y = currY + dir[1];
+                if(isValidCell(x, y) && board[x][y] != -1) {
+                    queue.add(new Move(x,y, step+1));
+                }
+            }
+        }
+        return -1;
+    }
+
+    static boolean isValidCell(int i, int j) {
+        return i >= 0 && j >= 0 && i < 8 && j < 8;
+    }
+}

@@ -1,0 +1,126 @@
+We have quite a few many-many to relationships here, for storing the tags and the documents, we can use something like the "Toxi" solution below I hope to get started,
+
+Table: Items
+Columns: Item_ID, Item_Title, Item_Type (which product item comes from), Content, Other Metadata
+
+Table: Tags
+Columns: Tag_ID, Tag_Title, Other Metadata
+
+Table: Item_Tags
+Columns: Item_ID, Tag_ID, Other Metadata
+Regarding the most frequently used tags, we will have to maintain some kind of cache i hope with some eviction or expiration strategy as well or top-k heavy hitter's problem. Also your design is dependent on the query patterns as well largely.
+
+Also depends on what time frame for looking up most frequently used tags. Most frequently used over the last hour/last day/last month? And does it have to be a real time list or something that can be computed every hour or something?
+
+I guess, it can be computed in a batch fashion over time; Doesn't really have to be super accurate, even an educated approximate will work! I believe the problem boils down to the classic top-k hitter's;
+
+Regarding the read pattern of tags, I think there can be multiple query pattern but primarily given an entity_id, return all the tags associated; Or return all the entities given a particular tag_id as well is possible.
+
+
+Jira - Issues
+Confluence - Web Pages
+BitBucket - Pull Request
+Trello - Board
+
+
+CREATE TABLE Items (
+  Item_ID int NOT NULL AUTO_INCREMENT,
+  Item_Title varchar(50) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (Item_ID)
+);
+
+Insert into Items(Item_Title) values("items_1");
+Insert into Items(Item_Title) values("items_2");
+Insert into Items(Item_Title) values("items_3");
+select * from Items;
+
+CREATE TABLE Tags (
+  Tag_ID int NOT NULL AUTO_INCREMENT,
+  Tag_Title varchar(50) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (Tag_ID)
+);
+
+Insert into Tags(Tag_Title) values("jira");
+Insert into Tags(Tag_Title) values("trello");
+Insert into Tags(Tag_Title) values("confluence");
+select * from Tags;
+
+CREATE TABLE Item_Tags (
+  Item_ID int NOT NULL,
+  Tag_ID int NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (Item_ID) REFERENCES Items(Item_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Tag_ID) REFERENCES Tags(Tag_ID) ON DELETE CASCADE,
+  UNIQUE KEY unique_index (Item_ID, Tag_ID)
+);
+
+Insert into Item_Tags(Item_ID,Tag_ID) values(1,1);
+Insert into Item_Tags(Item_ID,Tag_ID) values(1,2);
+Insert into Item_Tags(Item_ID,Tag_ID) values(2,2);
+Insert into Item_Tags(Item_ID,Tag_ID) values(3,2);
+Insert into Item_Tags(Item_ID,Tag_ID) values(1,3);
+select * from Item_Tags;
+
+//item with tag
+select 
+i.Item_Title,
+t.Tag_Title 
+from Item_Tags it 
+inner join Items i on i.Item_ID = it.Item_ID
+inner join Tags t on t.Tag_ID = it.Tag_ID;
+
+
+//item with all tags - concatenated
+select 
+i.Item_Title,
+group_concat(t.Tag_Title) as tag_titles
+from Item_Tags it 
+join Items i on i.Item_ID = it.Item_ID
+join Tags t on t.Tag_ID = it.Tag_ID
+group by i.Item_ID;
+
+//most frequent used tag (only return id)
+
+SELECT Tag_ID, COUNT(Tag_ID)
+FROM     Item_Tags
+GROUP BY Tag_ID
+ORDER BY COUNT(Tag_ID) DESC
+LIMIT 1;
+
+//most frequent used tag (return id and title)
+
+SELECT Tag_ID, Tag_Title from Tags where Tag_ID in (
+SELECT * from (SELECT Tag_ID
+FROM     Item_Tags
+GROUP BY Tag_ID
+ORDER BY COUNT(*) DESC
+LIMIT 1) as t1);
+
+//most frequent used tag in last 24 hours
+
+SELECT Tag_ID, Tag_Title from Tags where Tag_ID in (
+SELECT * from (SELECT Tag_ID
+FROM     Item_Tags
+WHERE created_at >= (NOW() - INTERVAL 24 HOUR)
+GROUP BY Tag_ID
+ORDER BY COUNT(*) DESC
+LIMIT 1) as t1);
+
+//The IGNORE allows this to succeed even if item is already connected to some of these tags.
+INSERT IGNORE INTO Item_Tags (Item_ID,Tag_ID)  VALUES (2,3), (1,3);
+
+//delete tag
+DELETE FROM Item_Tags WHERE Item_ID=2 and Tag_ID=3;
+DELETE FROM Item_Tags WHERE Item_ID=2 and Tag_ID in (2,3);
+
+//update tag
+UPDATE Item_Tags SET Tag_ID=1 WHERE Item_ID=3 and Tag_ID=2;
+
+
+https://stackoverflow.com/questions/10506181/tagging-system-toxi-solution-questions
+http://howto.philippkeller.com/2005/04/24/Tags-Database-schemas/
+https://learning.oreilly.com/library/view/tagging-people-powered-metadata/9780321550149/ch08.html#ch07lev2sec1

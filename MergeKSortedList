@@ -1,0 +1,41 @@
+void mergeList() {
+        // Number of linked lists
+        int k = 3;
+        
+        ListNode[] arr = new ListNode[k];
+
+        arr[0] = new ListNode(1);
+        arr[0].next = new ListNode(3);
+        arr[0].next.next = new ListNode(5);
+        arr[0].next.next.next = new ListNode(7);
+
+        arr[1] = new ListNode(2);
+        arr[1].next = new ListNode(4);
+        arr[1].next.next = new ListNode(6);
+        arr[1].next.next.next = new ListNode(8);
+
+        arr[2] = new ListNode(0);
+        arr[2].next = new ListNode(9);
+        arr[2].next.next = new ListNode(10);
+        arr[2].next.next.next = new ListNode(11);
+
+        PriorityQueue<ListNode> pq = new PriorityQueue<>(Comparator.comparingInt(v->v.val));
+        pq.addAll(Arrays.asList(arr));
+
+        ListNode result = pq.peek();
+        ListNode temp = result;
+        while(!pq.isEmpty()) {
+            ListNode curr = pq.poll();
+            if(curr.next != null) {
+                pq.add(curr.next);
+            }
+            temp.next = curr;
+            temp = curr;
+        }
+        System.out.println("printing list:");
+        while(result != null) {
+            System.out.print(result.val + "->");
+            result = result.next;
+        }
+        System.out.println("null");
+    }

@@ -1,0 +1,52 @@
+package com.practice;
+import java.util.*;
+
+public class DetectCycle {
+    private LinkedList<Integer>[] adj;
+    private int V;
+    DetectCycle(int v) {
+        this.V = v;
+        this.adj = new LinkedList[V];
+        for(int i=0; i<V; i++){
+            adj[i] = new LinkedList<>();
+        }
+    }
+    void addEdge(int u, int v) {
+        adj[u].add(v);
+    }
+    public static void main(String[] args) {
+        DetectCycle detectCycle = new DetectCycle(5);
+        detectCycle.addEdge(0,1);
+        detectCycle.addEdge(2,1);
+        detectCycle.addEdge(2, 3);
+        detectCycle.addEdge(3,4);
+        detectCycle.addEdge(4,2);
+        System.out.println(detectCycle.isCyclic());
+    }
+    boolean isCyclic() {
+        boolean[] visited = new boolean[V];
+        boolean[] recS = new boolean[V];
+        for(int i=0; i<V; i++) {
+            if(!visited[i]) {
+                if(dfs(i, visited, recS)) return true;
+            }
+        }
+        return false;
+    }
+
+    boolean dfs(int v, boolean[] visited, boolean[] recS) {
+        visited[v] = true;
+        recS[v] = true;
+        Iterator<Integer> iterator = adj[v].iterator();
+        while (iterator.hasNext()) {
+            Integer n = iterator.next();
+            if(!visited[n]) {
+                if(dfs(n, visited, recS)) return true;
+            } else if(recS[n]) {
+                return true;
+            }
+        }
+        recS[v] = false;
+        return false;
+    }
+}

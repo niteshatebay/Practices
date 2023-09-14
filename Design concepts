@@ -1,0 +1,467 @@
+-----------
+
+The Single Responsibility Principle
+
+a class should do one thing and therefore it should have only a single reason to change.
+
+The Open-Closed Principle
+
+classes should be open for extension and closed to modification.
+We should be able to add new functionality without touching the existing code for the class.
+
+The Liskov Substitution Principle
+
+class B is a subclass of class A, we should be able to pass an object of class B to any method that expects an object of class A and the method should not give any weird output in that case.
+
+The Interface Segregation Principle
+larger interfaces should be split into smaller ones. By doing so, we can ensure that implementing classes only need to be concerned about the methods that are of interest to them.
+the Interface Segregation Principle is about separating the interfaces.
+Clients should not be forced to implement a function they do no need.
+
+The Dependency Inversion Principle
+
+The Dependency Inversion principle states that our classes should depend upon interfaces or abstract classes instead of concrete classes and functions.
+
+--------------------------
+
+CAP
+
+Consistency
+Consistency means that all clients see the same data at the same time, no matter which node they connect to.
+
+Availability
+Availability means that that any client making a request for data gets a response, even if one or more nodes are down.
+
+Partition tolerance
+Partition tolerance means that the cluster must continue to work despite any number of communication breakdowns between nodes in the system
+
+-----------------------------
+
+A content delivery network (CDN) refers to a geographically distributed group of servers which work together to provide fast delivery of Internet content.
+
+If you were in New York and wanted to view the website of your favorite store in London that’s hosted on a server in the UK, you would experience slow content load times if the request had to travel all the way across the Atlantic Ocean. To remedy this, a CDN would store a cached version of the London website content in multiple geographical locations around the world, also called “points of presence” (PoPs). These PoPs contain their own caching servers and are responsible for delivering that content close to where you’re located in New York.
+
+You could think of a CDN like an ATM. Having a cash machine on practically every corner makes it fast and efficient to get money. There’s no wait time in long bank lines, and the ATMs are placed in many convenient locations for immediate access.
+
+The mission of a CDN is to reduce latency.
+Latency is that annoying delay you experience when trying to access a web page or video stream before it fully loads on your device.
+
+----------------------------
+
+Q. Why do we need load balancing?
+
+Ans. When using scalable microservices, a client needs to be able to route its requests to one of the multiple backend server instances. Multiple requests from the client(s) need to be load-balanced across the backend servers so that no single backend server gets overloaded.
+
+There are 2 approaches for load balancing:
+
+1. Server-side load-balancing: All backend server instances are registered with a central load balancer. A client requests this load balancer which then routes the request to one of the server instances using various algorithms like round-robin. AWS ELB is a prime example of server-side load-balancing that registers multiple EC2 instances launched in its auto-scaling group and then routes the client requests to one of the EC2 instances.
+
+Advantages of server-side load balancing:
+
+Simple client configuration: only need to know the load-balancer address.
+Clients can be untrusted: all traffic goes through the load-balancer where it can be looked at.
+Clients are not aware of the backend servers.
+
+2. Client-side load-balancing: The load balancing decision resides with the client itself. The client can take the help of a naming server (eg. Netflix Eureka) to get the list of registered backend server instances, and then route the request to one of these backend instances using client-side load balancing libraries like Netflix Ribbon.
+
+Advantages of client-side load balancing:
+
+No more single point of failure as in the case of the traditional load balancer approach.
+Reduced cost as the need for server-side load balancer goes away.
+Less network latency as the client can directly invoke the backend servers removing an extra hop for the load balancer.
+
+
+load balancer support a feature of heart beat check. This ensures that target machine is responding. As soon as a heart beat signal fails, load balancer stops sending request to that machine and redirects to other machines or cluster.
+
+Load balancing failover is a process of switching from one machine to another one when the previous machine fails. Usually, load balancers that have the heartbeat check feature can easily detect when a machine has stopped responding. Once the machine stops working, the load balancer redirects request sent to the machine to another functional machine.
+
+Q. Layer 4(transport layer i.e. TCP load balancer) vs Layer 7(application layer) Load Balancing
+In layer 4 load balancing, the load balancer has limited data information. It only has visibility on network information which is the ports and the IP address of the client who is sent in the request.The load balancer doesn't really know the content of the data it's receiving because the data is usually encrypted. It is not applicable to microservices. There's no caching since you can't access the data. There is only one TCP connection between the destination and source. TCP load balancers are for applications that do not use HTTP
+
+In layer 7 load balancing, the load balancer can access the application data and can be authorized to decrypt the data sent through the request. 
+Caching can be implemented. It is great for microservices. It must share the TLS Certificate. It has two TCP connections. The layer 7 load-balancer acts as a proxy, which means it maintains two TCP connections: one with the client and one with the server.
+
+common load balancing techniques -- Round robin, sticky session(issuing a cookie or by tracking their IP details), IP Address affinity
+
+Round robin: 
+    Weighted round robin: A weight is assigned to each server based on criteria(i.e. server’s traffic‑handling capacity). If, for example, server A is assigned a weight of 3 and server B a weight of 1, the load balancer forwards 3 requests to server A for each 1 it sends to server B.
+
+    Dynamic round robin – A weight is assigned to each server dynamically, based on real‑time data about the server’s current load and idle capacity.
+
+To use sticky sessions, the client must support cookies.
+
+IP Address affinity: In this approach, the client IP address is associated with a server node. All requests from a client IP address are served by one server node.
+This type of load balancing can be useful if your clients are likely to have disabled cookies.
+
+What are Load balancing web sockets?
+A connection can be opened through a load balancer, but once the connection is opened, it stays with the same server until it's closed or interrupted.
+
+------------------------------
+
+NGINX  - Reverse Proxy server
+
+A reverse proxy server is a type of proxy server that typically sits behind the firewall in a private network and directs client requests to the appropriate backend server. 
+Increased security – No information about your backend servers is visible outside your internal network,
+Increased scalability and flexibility – Because clients see only the reverse proxy’s IP address, you are free to change the configuration of your backend infrastructure.
+By decrypting incoming requests and encrypting server responses, the reverse proxy frees up resources on backend servers which they can then devote to their main purpose, serving content.
+
+Caching – Before returning the backend server’s response to the client, the reverse proxy stores a copy of it locally. When the client (or any client) makes the same request, the reverse proxy can provide the response itself from the cache instead of forwarding the request to the backend server. 
+
+-------------------------
+SAGA pattern - Microservice Architecture (A saga is a sequence of transactions that updates each service and publishes a message or event to trigger the next transaction step.)
+Two types:
+1. Choreography- event based
+2. Orchestration- command based
+
+-------------------------
+A composite key, is a combination of two or more columns to form a primary key for a table.
+@Embeddable
+public class BookId implements Serializable {
+
+    private String author;
+    private String name;
+
+    // standard getters and setters
+}
+
+@Entity
+public class Book {
+
+    @EmbeddedId
+    private BookId id;
+    private String genre;
+    private Integer price;
+
+    //standard getters and setters
+}
+
+@Repository
+public interface BookRepository extends JpaRepository<Book, BookId> {
+}
+----------------------------
+RabitMQ - an open-source message-broker
+Kafka - an open-source distributed event streaming platform
+
+Kafka supports re-read of consumed messages while rabbitMQ not.
+
+Kafka uses a pull mechanism that allows consumers to pull the data from the broker in batches. RabbitMQ comes with a push design in which the consumer is not aware of any message retrieval. The Broker ensures that the message is delivered to the consumer.
+
+The priority for all messages is the same in Kafka and it cannot be changed. RabbitMQ allows assigning priority to the messages using a priority queue.
+
+Kafka follows a retention period and messages stored based on the retention period are deleted once the period is over. On the other hand, RabbitMQ sends a positive acknowledgment via the consumer to get removed from the queue.
+------------------------------
+Write Through Caching.
+Data request comes to cache.
+Cache updates its data.
+Database updates its data.
+Request is completed once both database and cache are updated.
+
+Write Back Caching.
+Data request comes to cache.
+Cache updates its data.
+Request is completed.
+Database is updated asynchronously.
+
+Write Around Caching.
+Data request comes to database.
+Database updates its data.
+Cache is updated or the cache key is deleted.
+Request is completed.
+
+
+------------------------------
+Design pattern - well-proved solution for solving the specific problem/task.
+design patterns are programming language independent strategies for solving the common object-oriented design problems.
+
+1. Creational design patterns - Creational design patterns are concerned with the way of creating objects.
+
+-> Factory Method Pattern: It says that just define an interface or abstract class for creating an object but let the subclasses decide which class to instantiate. In other words, subclasses are responsible to create the instance of the class.
+
+we have an interface called Notification, and two concrete classes are implementing the Notification interface. A factory class NotificationFactory is created to get a Notification object.
+
+public interface Notification {
+    void notifyUser();
+}
+public class SMSNotification implements Notification {
+ 
+    @Override
+    public void notifyUser()
+    {
+        System.out.println("Sending an SMS notification");
+    }
+}
+public class EmailNotification implements Notification {
+ 
+    @Override
+    public void notifyUser()
+    {
+        System.out.println("Sending an e-mail notification");
+    }
+}
+
+public class NotificationFactory {
+    public Notification createNotification(String channel)
+    {
+        switch (channel) {
+        case "SMS":
+            return new SMSNotification();
+        case "EMAIL":
+            return new EmailNotification();
+        default:
+            throw new IllegalArgumentException("Unknown channel "+channel);
+        }
+    }
+}
+
+-> Singleton design pattern
+
+
+2. Structural design patterns - how classes and objects can be composed, to form larger structures.
+3. Behavioral Design Patterns - the interaction between the objects should be in such a way that they can easily talk to each other and still should be loosely coupled.
+
+--------------------------------
+
+
+Inversion of Control (IoC) means that objects do not construct other objects on which they rely on. Instead, the application will get these objects from an external framework (an IoC container). One method which provides these objects to the application is called Dependency Injection (DI).
+
+---------
+
+
+1. Design a rate limiter.
+2. Design a file tag system or voting system.
+3. Design a tagging system for Atlassian Products.
+write code for a thread scheduler
+https://www.guru99.com/mutex-vs-semaphore.html mutex semaphore
+design job scheduler
+design leader board
+
+How would you design Google’s database for web indexing?
+How would you design Twitter’s trending topics?
+How would you design Dropbox?
+How would you design a ticketing platform?
+How would you design Instagram Stories?
+How would you design Facebook?
+How would you design a real-time ranking system for Fortnite?
+How would you design Amazon.com?
+How would you design a system that counts the number of clicks on YouTube videos?
+How would you design YouTube Shorts?
+
+https://vmware.wd1.myworkdayjobs.com/en-US/VMware/userHome
+
+--------
+Representational State Transfer, or REST, is a popular architectural design for creating webservices. It offers a straightforward and adaptable method for creating APIs and employs HTTP as its underlying protocol. REST APIs carry out CRUD (Create, Read, Update, Delete) actions on resources using HTTP verbs (GET, POST, PUT, DELETE). REST Protocols are therefore simple to comprehend and use.
+
+gRPC (Remote Procedure Call), on the other hand, is a modern, high-performance technology that is used to create APIs. gRPC is more effective than REST because it is based on the HTTP/2 standard and exchanges data in binary format. Bi-directional streaming, another feature of gRPC that allows real-time communication between clients and servers, is also supported.
+
+So, what are some of the key differences between gRPC and REST APIs?
+
+Performance: gRPC is much faster than REST due to its use of binary data exchange and HTTP/2 protocol.
+Protocol: REST APIs use HTTP while gRPC uses HTTP/2.
+Data format: REST APIs typically use JSON or XML for data exchange while gRPC uses Protocol Buffers.
+Streaming: gRPC supports bi-directional streaming while REST only supports uni-directional streaming.
+
+In summary, both gRPC and REST have their own strengths and weaknesses, and the choice between them will depend on the specific requirements of your project. If you need high-performance and real-time communication, gRPC might be the better choice. If you need simplicity and flexibility, REST might be a better fit.
+
+What do you think about gRPC vs REST?
+
+REST APIs use HTTP/1.1 for transport. REST stands for Representational State Transfer. It’s a web-based architectural style.
+gRPC APIs transfer data in Protocol Buffers format.
+
+A Few Resources to Read About - 
+HTTP/2 - https://lnkd.in/gnisSayS
+Protocol Buffers - https://lnkd.in/gCZ8CnF4
+Bidirectional Streaming - 
+https://lnkd.in/gUKaw2Tu
+
+-----
+
+
+Http methods:
+
+GET: The GET method is used to request data from a server. It retrieves data from a specified resource without causing any modifications on the server. GET requests are typically used to retrieve information and should not have any side effects.
+
+POST: The POST method is used to submit data to be processed to a specified resource. It can be used to create new resources or update existing ones on the server. POST requests can have side effects on the server, such as creating new records in a database.
+
+PUT: The PUT method is used to update or create a resource at a specific URL. It's typically used to update an existing resource with the provided data. If the resource doesn't exist, PUT can create it. PUT requests should be idempotent, meaning making the same request multiple times should have the same effect as making it once.
+
+PATCH: The PATCH method is similar to PUT but is used to apply partial modifications to a resource. Instead of updating the entire resource, you can specify only the fields that need to be changed. Like PUT, PATCH requests should also be idempotent.
+
+DELETE: The DELETE method is used to request the removal of a resource from the server. It deletes the specified resource. As with other methods, the effect of a DELETE request should be idempotent.
+
+HEAD: The HEAD method is similar to GET, but it only retrieves the headers of the response, not the actual content. It's often used to check the status or headers of a resource without fetching its entire content.
+
+OPTIONS: The OPTIONS method is used to request information about the communication options available for a resource. It's often used to inquire about the HTTP methods supported by the server for a particular resource.
+
+-------------------------
+
+websockets:
+- bidirectional real-time interactive communication between a client and a server.
+- WebSockets use the WebSocket protocol for communication. A WebSocket connection begins as a regular HTTP connection, which gets modified to a WebSocket connection via the WebSocket handshake. The handshake begins with a client sending an HTTP request with a special UPGRADE header. The server then receives the request, processes it, and switches to the WebSocket protocol if the request is accepted. 
+- WebSockets allow you to send data in binary and UTF-8 text formats.
+- WebSockets have one significant disadvantage. They do not entirely operate on top of HTTP. Instead, they need their TCP connection to work. WebSockets do not automatically recover with closed connections. This must be performed manually.
+
+SSE (Server-Sent Events): mono-directional
+- a technique that allows a browser (client) to receive automatic updates from a server, such as text-based event data, over a standard HTTP connection.
+- after an HTTP connection has been established between the server and the client, the server can send automatic updates. Instead of using a custom protocol, data is sent over HTTP.
+- SSE is a one-way technique and does not allow for bidirectional data transmission. browser clients will have to register to the event source via the JavaScript API EventSource.
+- SSE is a more straightforward and faster approach
+- Automatic reconnection: if a client loses connection to the event source, reconnection is automatically retried after a certain amount of time
+- SSEs transmit data in text-encoded UTF-8.
+
+
+Use Cases
+WebSockets: WebSockets are widely used and valued in technological solutions such as real-time polling, chat, media players, multiplayer games, etc.
+
+Server-Sent Events: There are many applications where sending data from the client isn’t necessary. SSEs are especially useful in status updates, social-media news feeds, push notifications, newsletters, etc.
+
+----------------------
+
+1. If we are dealing with a read-heavy system, it's good to consider using a Cache.
+
+2. If we need low latency in the system, it's good to consider using a Cache & CDN.
+
+3. If we are dealing with a write-heavy system, it's good to use a Message Queue for Async processing
+
+4. If we need a system to be an ACID complaint, we should go for RDBMS or SQL Database
+
+5. If data is unstructured & doesn't require ACID properties, we should go for NO-SQL Database
+
+6. If the system has complex data in the form of videos, images, files etc, we should go for Blob/Object storage
+
+7. If the system requires complex pre-computation like a news feed, we should use a Message Queue & Cache
+
+8. If the system requires searching data in high volume, we should consider using a search index, tries or a search engine like Elasticsearch
+
+9. If the system requires to Scale SQL Database, we should consider using Database Sharding
+
+10. If the system requires High Availability, Performance, & Throughput, we should consider using a Load Balancer
+
+11. If the system requires faster data delivery globally, reliability, high availability, & performance, we should consider using a CDN
+
+12. If the system has data with nodes, edges, and relationships like friend lists, & road connections, we should consider using a Graph Database
+
+13. If the system needs scaling of various components like servers, databases, etc, we should consider using Horizontal Scaling
+
+14. If the system requires high-performing database queries, we should use Database Indexes
+
+15. If the system requires bulk job processing, we should consider using Batch Processing & Message Queues
+
+16. If the system requires reducing server load and preventing DOS attacks, we should use a Rate Limiter
+
+17. If the system has microservices, we should consider using an API Gateway (Authentication, SSL Termination, Routing etc)
+
+18. If the system has a single point of failure, we should implement Redundancy in that component
+
+19. If the system needs to be fault-tolerant, & durable, we should implement Data Replication (creating multiple copies of data on different servers)
+
+20. If the system needs user-to-user communication (bi-directional) in a fast way, we should use Websockets
+
+21. If the system needs the ability to detect failures in a distributed system, we should implement a Heartbeat
+
+22. If the system needs to ensure data integrity, we should use Checksum Algorithm
+
+23. If the system needs to scale servers with add/removal of nodes efficiently, with no hotspots, we should implement Consistent Hashing
+
+------
+
+API gateway - An API gateway is a server that acts as a single point of entry for a set of microservices. It receives client requests, forwards them to the appropriate microservice, and then returns the server's response to the client.
+Authentication, routing, rate limiting, logging, monitoring,load balancing, caching
+
+
+database system doesn't write data directly into main database files, they first write query in a separate log file.
+We call it WAL (Write-ahead log), this techniques provides atomicity and durability.
+------
+
+Master-Slave replication
+
+In a MySQL cluster, data replication from master to slave nodes is a fundamental mechanism for achieving data redundancy, fault tolerance, and load balancing.
+The cluster is set up with one or more MySQL nodes. Among these, one node is designated as the "master," and the others are "slaves."
+The master node maintains a binary log (also known as the "binlog"), which is a record of all changes (inserts, updates, deletes) made to the data on the master.
+The slave nodes connect to the master and read the binary log. They maintain their own replication logs, known as "relay logs."
+When a write operation (such as an insert, update, or delete) occurs on the master, the data change is recorded in the binary log.
+The slave nodes continuously poll the master's binary log for new changes. When they identify a new change, they record it in their own relay log. Then, a separate process called the "SQL thread" applies the changes from the relay log to the slave's local data, effectively replicating the changes made on the master.
+MySQL replication is typically asynchronous, meaning that the master does not wait for confirmation from the slave before acknowledging the write operation. 
+Depending on network conditions and the complexity of changes, there might be a delay (replication lag) between the time a change is made on the master and when it is applied on the slave. This lag can vary and needs to be managed according to the requirements of data consistency and redundancy.
+-------
+
+
+
+flood fill
+
+ Design Slack
+ design  mutual friend in fb
+ 
+
+class Solution {
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+        int preColor = image[sr][sc];
+        if(preColor != color){
+            dfs(image, sr, sc, color, preColor);
+        }
+        return image;
+    }
+    
+    void dfs(int[][] image, int i, int j, int color, int preColor) {
+        if(i >= 0 && i < image.length && j >= 0 && j < image[0].length && image[i][j] == preColor) {
+            image[i][j] = color;
+            dfs(image, i-1, j, color, preColor);
+            dfs(image, i+1, j, color, preColor);
+            dfs(image, i, j-1, color, preColor);
+            dfs(image, i, j+1, color, preColor);
+        } 
+    }
+}
+
+-------
+cycle in a matrix and cirucular array
+
+https://leetcode.com/problems/snakes-and-ladders/description/?envType=study-plan-v2&envId=top-interview-150
+https://leetcode.com/problems/longest-increasing-path-in-a-matrix/description/
+
+https://www.techinterviewhandbook.org/grind75
+https://leetcode.com/discuss/general-discussion/460599/blind-75-leetcode-questions
+build a scalable Notifications Engine
+
+https://www.linkedin.com/pulse/system-design-distributed-job-scheduler-keep-simple-stupid-ismail/
+https://medium.com/@raxshah/system-design-design-a-distributed-job-scheduler-kiss-interview-series-753107c0104c
+
+design distributed key value pair system
+Design a meeting scheduler system
+Design the multiplayer online chess game.
+Check if the given graph is strongly connected
+
+https://betterprogramming.pub/internals-workings-of-redis-718f5871be84 *************
+
+write ahead logs
+
+UHN7827892
+OQO948349506
+Area / Town Name	Tehsil / Taluk Name
+Begur				Bangalore South
+
+Code a system that can schedule meetings in a predefined set of conference rooms.
+https://redis.com/solutions/use-cases/leaderboards/
+
+the monster of wall street
+
+
+Design a scalable architecture for a web application.
+Design a messaging system like WhatsApp or Facebook Messenger.
+Design a distributed system for a ride-sharing service like Uber or Lyft.
+Design a recommendation system like Amazon or Netflix.
+Design a payment gateway system like PayPal or Stripe.
+Design a search engine like Google or Bing.
+Design a video streaming service like YouTube or Netflix.
+Design a booking system for a hotel or airline.
+Design a real-time collaborative editor like Google Docs.
+Design a food delivery system like Grubhub or DoorDash.
+Design a healthcare management system for hospitals or clinics.
+Design a social networking site for professionals like LinkedIn.
+Design a content management system for a news site or blog.
+Design a weather forecasting system.
+Design a recommendation system for e-commerce websites.
+Design a scalable Notifications Engine
+
+https://github.com/kousiknath/LowLevelDesign/tree/main
+
+

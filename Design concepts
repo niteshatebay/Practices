@@ -463,5 +463,15 @@ Design a recommendation system for e-commerce websites.
 Design a scalable Notifications Engine
 
 https://github.com/kousiknath/LowLevelDesign/tree/main
+------------
+An association is a relationship where all objects have their own lifecycle, and there is no owner.
+Consider the case of teachers and students. Numerous students can be associated with a single teacher, and a single student can be associated with numerous teachers. However, there is no ownership between the two objects, and each has its own lifecycle. Both can be created and deleted on their own.
 
+An association can be divided into two types: composition and aggregation.
+
+An aggregation is a subset of an association in which all objects have their own lifespan, yet ownership exists, and child objects cannot belong to another parent object. Let's also understand an aggregation with a scenario.
+Consider the teacher and their departments as an example. A single teacher cannot belong to more than one department. However, deleting the department does not destroy the teacher's object. We can consider it a "has-a" relationship.
+
+A composition is yet another specialized type of aggregation which we can refer to as a death relationship. It is a powerful form of aggregation. In it, a child object has no lifecycle, and if the parent object is erased, all child objects are deleted as well.
+Consider the link between a house and its rooms. A house can have numerous rooms - no room has an autonomous life, and no room can belong to two different houses. If we delete the house, the room will be deleted as well.
 

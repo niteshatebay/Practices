@@ -1,0 +1,67 @@
+package com.practice;
+import java.util.*;
+
+public class AlienDictionary {
+    private static List<Integer>[] adj;
+    private static int V;
+
+    public static void main(String[] args) {
+        String[] words = {"baa", "abcd", "abca", "cab", "cad"};
+        int n = words.length;
+        int k = 4;
+        printOrder(words, n, k);
+    }
+
+    private static void printOrder(String[] words, int n, int k) {
+        adj = new LinkedList[k];
+        V = k;
+        for (int i = 0; i < V; i++) {
+            adj[i] = new LinkedList<>();
+        }
+
+        for (int i = 0; i < n - 1; i++) {
+            String word = words[i];
+            String nextWord = words[i + 1];
+
+            int j = 0;
+            while (j < word.length() && j < nextWord.length()) {
+                if (word.charAt(j) != nextWord.charAt(j)) {
+                    addEdge(word.charAt(j), nextWord.charAt(j));
+                    break;
+                }
+                j++;
+            }
+        }
+        topologicalSort();
+    }
+
+    private static void addEdge(char u, char v) {
+        adj[u - 'a'].add(v - 'a');
+    }
+
+    private static void topologicalSort() {
+        boolean[] visited = new boolean[V];
+        Stack<Integer> stack = new Stack<>();
+        for(int i=0; i<V; i++) {
+            if(!visited[i]) {
+                topologicalSortUtil(i, visited, stack);
+            }
+        }
+        while (!stack.isEmpty()) {
+            char c = (char) (stack.pop() + 'a');
+            System.out.println(c);
+        }
+    }
+
+    private static void topologicalSortUtil(int v, boolean[] visited, Stack<Integer> stack) {
+        visited[v] = true;
+        Iterator<Integer> iterator = adj[v].iterator();
+        while (iterator.hasNext()) {
+            Integer n = iterator.next();
+            if(!visited[n]) {
+                topologicalSortUtil(n, visited, stack);
+            }
+        }
+        stack.push(v);
+    }
+}

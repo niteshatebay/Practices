@@ -1,0 +1,91 @@
+package com.practice;
+
+import java.util.*;
+
+public class TransactionalCache {
+    private Map<String, String> cache;                         // Main cache store
+    private Deque<Map<String, String>> transactionStack;       // Stack to manage transactions
+
+    public TransactionalCache() {
+        cache = new HashMap<>();
+        transactionStack = new ArrayDeque<>();
+    }
+
+    // Add or update a key-value pair
+    public void put(String key, String value) {
+        if (!transactionStack.isEmpty()) {
+            transactionStack.peek().put(key, cache.get(key));  // Save old value before modification
+        }
+        cache.put(key, value);
+    }
+
+    // Retrieve a value by key
+    public String get(String key) {
+        return cache.getOrDefault(key, null);
+    }
+
+    // Delete a key-value pair
+    public void delete(String key) {
+        if (cache.containsKey(key)) {
+            if (!transactionStack.isEmpty()) {
+                transactionStack.peek().put(key, cache.get(key)); // Save old value before deletion
+            }
+            cache.remove(key);
+        }
+    }
+
+    // Begin a new transaction
+    public void begin() {
+        transactionStack.push(new HashMap<>());
+    }
+
+    // Commit the current transaction
+    public void commit() {
+        if (transactionStack.isEmpty()) {
+            throw new IllegalStateException("No transaction to commit.");
+        }
+        transactionStack.pop();  // Discard the saved states since changes are now permanent
+    }
+
+    // Rollback the current transaction
+    public void rollback() {
+        if (transactionStack.isEmpty()) {
+            throw new IllegalStateException("No transaction to rollback.");
+        }
+        Map<String, String> transactionChanges = transactionStack.pop();
+        for (Map.Entry<String, String> entry : transactionChanges.entrySet()) {
+            if (entry.getValue() == null) {
+                cache.remove(entry.getKey());  // Revert deletion
+            } else {
+                cache.put(entry.getKey(), entry.getValue());  // Revert to old value
+            }
+        }
+    }
+
+    // Display the current state of the cache (for debugging)
+    public void display() {
+        System.out.println("Cache: " + cache);
+    }
+
+    public static void main(String[] args) {
+        TransactionalCache cache = new TransactionalCache();
+
+        cache.put("A", "1");
+        cache.put("B", "2");
+        cache.display();
+
+        cache.begin();  // Start transaction
+        cache.put("A", "3");
+        cache.delete("B");
+        cache.display();
+
+        cache.rollback();  // Rollback transaction
+        cache.display();
+
+        cache.begin();  // Start new transaction
+        cache.put("A", "4");
+        cache.commit();  // Commit transaction
+        cache.display();
+    }
+}
+

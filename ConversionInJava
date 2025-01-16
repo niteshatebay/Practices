@@ -1,0 +1,31 @@
+class Book{
+    private String name;
+    private String author;
+    Book(String name, String author) {
+        this.name = name;
+        this.author = author;
+    }
+    public String getName() {
+          return name;
+    }
+    public String getAuthor() {
+        return author;
+    }
+}
+//List to Map
+List<Book> list = new ArrayList<>();
+list.add(new Book("A", "ABC"));
+list.add(new Book("X", "XYZ"));
+Map<String, String> map = list.stream().collect(Collectors.toMap(item -> item.getName(), item -> item.getAuthor()));
+
+
+// Create a list
+List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
+
+// Convert list to int array
+int[] array = list.stream().mapToInt(Integer::intValue).toArray();
+
+int[] array = {1, 2, 2, 3, 4, 4, 5};
+
+// Remove duplicates using streams
+int[] uniqueArray = Arrays.stream(array).distinct().toArray();

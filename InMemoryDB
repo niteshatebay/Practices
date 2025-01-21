@@ -1,0 +1,160 @@
+1. Schema Class
+The schema stores column names (as a Set<String>) and validates rows against them.
+class Schema {
+    private final Set<String> columns;
+
+    public Schema(Set<String> columnNames) {
+        this.columns = new HashSet<>(columnNames);
+    }
+
+    // Validates that the row has the correct set of columns
+    public void validateRow(Row row) {
+        if (!columns.equals(row.getData().keySet())) {
+            throw new IllegalArgumentException("Row does not match schema: " + columns);
+        }
+    }
+
+    public Set<String> getColumnNames() {
+        return columns;
+    }
+}
+
+2. Row Class
+The row stores data as a map from column names to values (Object type).
+class Row {
+    private final Map<String, Object> data = new HashMap<>();
+
+    public Row(Map<String, Object> data) {
+        this.data.putAll(data);
+    }
+
+    public Object get(String column) {
+        return data.get(column);
+    }
+
+    public void set(String column, Object value) {
+        data.put(column, value);
+    }
+
+    public Map<String, Object> getData() {
+        return new HashMap<>(data);
+    }
+}
+
+3. Table Class
+The table stores rows and validates them against the schema.
+import java.util.*;
+import java.util.function.Predicate;
+
+class Table {
+    private final Schema schema;
+    private final List<Row> rows = new ArrayList<>();
+
+    public Table(Schema schema) {
+        this.schema = schema;
+    }
+
+    // Adds a row after validating it against the schema
+    public void addRow(Row row) {
+        schema.validateRow(row);
+        rows.add(row);
+    }
+
+    public List<Row> getRows() {
+        return new ArrayList<>(rows);
+    }
+
+    // Updates rows based on a condition
+    public void updateRows(Predicate<Row> condition, Map<String, Object> updates) {
+        for (Row row : rows) {
+            if (condition.test(row)) {
+                updates.forEach(row::set);
+            }
+        }
+    }
+
+    // Deletes rows based on a condition
+    public void deleteRows(Predicate<Row> condition) {
+        rows.removeIf(condition);
+    }
+}
+
+4. Database Class
+The database manages multiple tables and allows operations like insert, select, update, and delete.
+import java.util.*;
+import java.util.function.Predicate;
+
+public class Database {
+    private final Map<String, Table> tables = new HashMap<>();
+
+    // Create a new table in the database
+    public void createTable(String tableName, Schema schema) {
+        if (tables.containsKey(tableName)) {
+            throw new IllegalArgumentException("Table already exists: " + tableName);
+        }
+        tables.put(tableName, new Table(schema));
+    }
+
+    // Insert a row into the table
+    public void insert(String tableName, Row row) {
+        Table table = getTable(tableName);
+        table.addRow(row);
+    }
+
+    // Select all rows from the table
+    public List<Row> select(String tableName) {
+        return getTable(tableName).getRows();
+    }
+
+    // Update rows in the table based on a condition
+    public void update(String tableName, Predicate<Row> condition, Map<String, Object> updates) {
+        getTable(tableName).updateRows(condition, updates);
+    }
+
+    // Delete rows from the table based on a condition
+    public void delete(String tableName, Predicate<Row> condition) {
+        getTable(tableName).deleteRows(condition);
+    }
+
+    // Helper method to retrieve the table
+    private Table getTable(String tableName) {
+        Table table = tables.get(tableName);
+        if (table == null) {
+            throw new IllegalArgumentException("Table not found: " + tableName);
+        }
+        return table;
+    }
+}
+
+---------------------------
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Database db = new Database();
+
+        // Define schema for "users" table with columns "id", "name", and "balance"
+        Schema userSchema = new Schema(Set.of("id", "name", "balance"));
+
+        // Create the "users" table in the database
+        db.createTable("users", userSchema);
+
+        // Insert rows into the "users" table
+        db.insert("users", new Row(Map.of("id", 1, "name", "Alice", "balance", 100.50)));
+        db.insert("users", new Row(Map.of("id", 2, "name", "Bob", "balance", 200.75)));
+
+        // Select all rows from the "users" table
+        System.out.println("Before update:");
+        db.select("users").forEach(row -> System.out.println(row.getData()));
+
+        // Update a user's balance
+        db.update("users", row -> row.get("name").equals("Alice"), Map.of("balance", 150.75));
+
+        // Delete a user with id 2
+        db.delete("users", row -> Objects.equals(row.get("id"), 2));
+
+        // Display remaining rows
+        System.out.println("\nAfter update and delete:");
+        db.select("users").forEach(row -> System.out.println(row.getData()));
+    }
+}

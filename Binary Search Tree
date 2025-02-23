@@ -1,0 +1,94 @@
+Populating Next Right Pointers in Each Node
+public Node connect(Node root) {
+        if (root == null) return null; // Handle edge case
+
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        
+        while (!queue.isEmpty()) {
+            int nodeCount = queue.size();
+            
+            Node prev = null; // Keep track of the previous node in the level
+            for (int i = 0; i < nodeCount; i++) {
+                Node temp = queue.poll();
+                
+                if (prev != null) {
+                    prev.next = temp; // Link previous node to current node
+                }
+                prev = temp; // Move prev pointer
+
+                if (temp.left != null) queue.add(temp.left);
+                if (temp.right != null) queue.add(temp.right);
+            }
+            prev.next = null; // Ensure last node in level points to null
+        }
+        return root;
+    }
+
+-------
+
+To find the kth smallest element in a Binary Search Tree (BST) in O(1) space, we can use Morris Inorder Traversal.
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    
+    TreeNode(int val) {
+        this.val = val;
+        this.left = this.right = null;
+    }
+}
+
+public class KthSmallestInBST {
+    
+    public static int kthSmallest(TreeNode root, int k) {
+        int count = 0; // Track the number of elements visited
+        TreeNode curr = root;
+
+        while (curr != null) {
+            if (curr.left == null) {
+                // Visit the node
+                count++;
+                if (count == k) return curr.val;
+                
+                // Move to the right
+                curr = curr.right;
+            } else {
+                // Find the inorder predecessor of curr
+                TreeNode pred = curr.left;
+                while (pred.right != null && pred.right != curr) {
+                    pred = pred.right;
+                }
+
+                if (pred.right == null) {
+                    // Create a temporary link to curr
+                    pred.right = curr;
+                    curr = curr.left;
+                } else {
+                    // Restore tree structure
+                    pred.right = null;
+                    
+                    // Visit the node
+                    count++;
+                    if (count == k) return curr.val;
+                    
+                    // Move to the right
+                    curr = curr.right;
+                }
+            }
+        }
+        return -1; // If k is out of range
+    }
+
+    public static void main(String[] args) {
+        // Sample BST
+        TreeNode root = new TreeNode(5);
+        root.left = new TreeNode(3);
+        root.right = new TreeNode(6);
+        root.left.left = new TreeNode(2);
+        root.left.right = new TreeNode(4);
+        root.left.left.left = new TreeNode(1);
+
+        int k = 3;
+        System.out.println("Kth Smallest Element: " + kthSmallest(root, k)); // Output: 3
+    }
+}

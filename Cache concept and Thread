@@ -1,0 +1,64 @@
+Feature |	Redis |	Memcached
+Data Structure	Supports various data types: Strings, Lists, Sets, Hashes, Sorted Sets, Bitmaps, HyperLogLogs, etc.	
+Only supports simple key-value pairs (strings)
+
+Persistence	Supports persistence (RDB snapshots & AOF logs)	
+No persistence (data is lost on restart)
+
+Data Eviction	Configurable eviction policies
+Uses LRU (Least Recently Used) eviction by default
+
+Performance	Slightly slower for simple reads/writes but optimized for complex operations	
+Faster for simple key-value lookups due to lower overhead
+
+Transactions	Supports transactions with MULTI, EXEC, DISCARD, and WATCH	
+No transaction support
+
+Pub/Sub Messaging	Yes, supports Pub/Sub messaging	
+No Pub/Sub support
+
+Use Cases	Caching, session storage, message queues, leaderboard tracking, real-time analytics	
+Simple caching, storing session data, distributed caching
+
+---------
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+// Task implementing Runnable interface
+class MyTask implements Runnable {
+    private final int taskId;
+
+    public MyTask(int taskId) {
+        this.taskId = taskId;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Task " + taskId + " is running on " + Thread.currentThread().getName());
+        try {
+            Thread.sleep(1000); // Simulate some work
+        } catch (InterruptedException e) {
+            System.out.println("Task " + taskId + " interrupted.");
+        }
+        System.out.println("Task " + taskId + " completed.");
+    }
+}
+
+public class ExecutorServiceExample {
+    public static void main(String[] args) {
+        // Create a fixed thread pool with 3 threads
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+
+        // Submit multiple tasks to executor service
+        for (int i = 1; i <= 5; i++) {
+            executor.execute(new MyTask(i));
+        }
+
+        // Shutdown executor after all tasks are submitted
+        executor.shutdown();
+
+        System.out.println("All tasks submitted.");
+    }
+}
+-----

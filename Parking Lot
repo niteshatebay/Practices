@@ -1,0 +1,145 @@
+package com.practice;
+import java.util.*;
+import java.time.LocalDateTime;
+
+enum VehicleType {
+    CAR, BIKE;
+}
+abstract class Vehicle {
+    private String licensePlate;
+    private VehicleType type;
+
+    public Vehicle(String licensePlate, VehicleType type) {
+        this.licensePlate = licensePlate;
+        this.type = type;
+    }
+
+    public String getLicensePlate() { return licensePlate; }
+    public VehicleType getType() { return type; }
+}
+
+class Car extends Vehicle {
+    public Car(String licensePlate) {
+        super(licensePlate, VehicleType.CAR);
+    }
+}
+
+class Bike extends Vehicle {
+    public Bike(String licensePlate) {
+        super(licensePlate, VehicleType.BIKE);
+    }
+}
+
+class ParkingSlot {
+    private int slotNumber;
+    private boolean isOccupied;
+    private Vehicle vehicle;
+    private VehicleType slotType;
+    private LocalDateTime entryTime;
+
+    public ParkingSlot(int slotNumber, VehicleType slotType) {
+        this.slotNumber = slotNumber;
+        this.slotType = slotType;
+        this.isOccupied = false;
+    }
+
+    public boolean isAvailable() { return !isOccupied; }
+
+    public void parkVehicle(Vehicle vehicle) {
+        this.vehicle = vehicle;
+        this.isOccupied = true;
+        this.entryTime = LocalDateTime.now();
+    }
+
+    public double removeVehicle(double pricePerHour) {
+        if (vehicle == null || !isOccupied) {
+            return 0.0;
+        }
+        LocalDateTime exitTime = LocalDateTime.now();
+        long hoursParked = java.time.Duration.between(entryTime, exitTime).toHours();
+        if (hoursParked == 0) hoursParked = 1;  // Minimum 1-hour charge
+
+        double totalCost = hoursParked * pricePerHour;
+
+        this.vehicle = null;
+        this.isOccupied = false;
+        this.entryTime = null;
+        return totalCost;
+    }
+
+    public VehicleType getSlotType() { return slotType; }
+    public Vehicle getVehicle() { return vehicle; }
+    public int getSlotNumber() { return slotNumber; }
+}
+
+
+class ParkingLot {
+    private String name;
+    private List<ParkingSlot> slots;
+    private final double carPricePerHour = 10.0;
+    private final double bikePricePerHour = 5.0;
+
+    public ParkingLot(String name, int carSlots, int bikeSlots) {
+        this.name = name;
+        this.slots = new ArrayList<>();
+
+        int slotNumber = 1;
+        for (int i = 0; i < carSlots; i++) slots.add(new ParkingSlot(slotNumber++, VehicleType.CAR));
+        for (int i = 0; i < bikeSlots; i++) slots.add(new ParkingSlot(slotNumber++, VehicleType.BIKE));
+    }
+
+    public boolean parkVehicle(Vehicle vehicle) {
+        for (ParkingSlot slot : slots) {
+            if (slot.isAvailable() && slot.getSlotType() == vehicle.getType()) {
+                slot.parkVehicle(vehicle);
+                System.out.println("Vehicle " + vehicle.getLicensePlate() + " parked at Slot " + slot.getSlotNumber());
+                return true;
+            }
+        }
+        System.out.println("No available slot for vehicle: " + vehicle.getLicensePlate());
+        return false;
+    }
+
+    public boolean removeVehicle(String licensePlate) {
+        for (ParkingSlot slot : slots) {
+            if (!slot.isAvailable() && slot.getVehicle().getLicensePlate().equals(licensePlate)) {
+                double pricePerHour = (slot.getSlotType() == VehicleType.CAR) ? carPricePerHour : bikePricePerHour;
+                double cost = slot.removeVehicle(pricePerHour);
+
+                System.out.println("Vehicle " + licensePlate + " removed from Slot " + slot.getSlotNumber());
+                System.out.println("Total Parking Cost: $" + cost);
+                return true;
+            }
+        }
+        System.out.println("Vehicle " + licensePlate + " not found in the parking lot.");
+        return false;
+    }
+
+    public void displayAvailableSlots() {
+        System.out.println("Available Slots:");
+        for (ParkingSlot slot : slots) {
+            if (slot.isAvailable()) System.out.println("Slot " + slot.getSlotNumber() + " - " + slot.getSlotType());
+        }
+    }
+}
+
+public class ParkingSystemTest {
+    public static void main(String[] args) {
+        ParkingLot parkingLot = new ParkingLot("City Parking", 2, 2);
+
+        Vehicle car1 = new Car("CAR123");
+        Vehicle bike1 = new Bike("BIKE456");
+
+        parkingLot.parkVehicle(car1);
+        parkingLot.parkVehicle(bike1);
+
+        parkingLot.displayAvailableSlots();
+
+        // Simulate a wait time for realistic cost calculation
+        try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        parkingLot.removeVehicle("CAR123");
+        parkingLot.displayAvailableSlots();
+    }
+}
+

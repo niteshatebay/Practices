@@ -219,6 +219,53 @@ public class NotificationFactory {
 2. Structural design patterns - how classes and objects can be composed, to form larger structures.
 3. Behavioral Design Patterns - the interaction between the objects should be in such a way that they can easily talk to each other and still should be loosely coupled.
 
+
+// Step 1: Strategy Interface
+public interface Notification {
+    void notifyUser();
+}
+
+// Step 2: Concrete Strategies
+public class SMSNotification implements Notification {
+    @Override
+    public void notifyUser() {
+        System.out.println("Sending an SMS notification");
+    }
+}
+
+public class EmailNotification implements Notification {
+    @Override
+    public void notifyUser() {
+        System.out.println("Sending an e-mail notification");
+    }
+}
+
+// Step 3: Context Class (Uses a Strategy)
+public class NotificationService {
+    private Notification notification; // Strategy
+
+    public NotificationService(Notification notification) {
+        this.notification = notification;
+    }
+
+    public void sendNotification() {
+        notification.notifyUser();
+    }
+}
+
+// Step 4: Main Method (Client)
+public class Main {
+    public static void main(String[] args) {
+        // Using SMS Notification
+        NotificationService smsService = new NotificationService(new SMSNotification());
+        smsService.sendNotification(); // Output: Sending an SMS notification
+
+        // Using Email Notification
+        NotificationService emailService = new NotificationService(new EmailNotification());
+        emailService.sendNotification(); // Output: Sending an e-mail notification
+    }
+}
+
 --------------------------------
 
 

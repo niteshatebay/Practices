@@ -1,0 +1,132 @@
+package com.practice;
+
+import java.util.concurrent.*;
+import java.util.*;
+
+class Message {
+    private final String id;
+    private final String data;
+
+    public Message(String id, String data) {
+        this.id = id;
+        this.data = data;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getData() {
+        return data;
+    }
+}
+
+class Topic {
+    private final String name;
+    private final BlockingQueue<Message> messageQueue;
+    private final List<Consumer> subscribers;
+
+    public Topic(String name) {
+        this.name = name;
+        this.messageQueue = new LinkedBlockingQueue<>();
+        this.subscribers = new CopyOnWriteArrayList<>();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void publish(Message message) {
+        messageQueue.offer(message);
+        notifySubscribers(message);
+    }
+
+    public void subscribe(Consumer consumer) {
+        subscribers.add(consumer);
+    }
+
+    private void notifySubscribers(Message message) {
+        for (Consumer consumer : subscribers) {
+            consumer.consume(message);
+        }
+    }
+}
+
+class Producer {
+    private final String producerId;
+
+    public Producer(String producerId) {
+        this.producerId = producerId;
+    }
+
+    public void publishMessage(Topic topic, String data) {
+        Message message = new Message(UUID.randomUUID().toString(), data);
+        System.out.println("Producer " + producerId + " published: " + data);
+        topic.publish(message);
+    }
+}
+
+class Consumer {
+    private final String consumerId;
+    private final ExecutorService executorService;
+
+    public Consumer(String consumerId) {
+        this.consumerId = consumerId;
+        this.executorService = Executors.newSingleThreadExecutor();
+    }
+
+    public void consume(Message message) {
+        executorService.submit(() -> {
+            System.out.println("Consumer " + consumerId + " consumed: " + message.getData());
+        });
+    }
+}
+
+class PubSubBroker {
+    private final ConcurrentHashMap<String, Topic> topics = new ConcurrentHashMap<>();
+
+    public Topic createTopic(String topicName) {
+        topics.putIfAbsent(topicName, new Topic(topicName));
+        return topics.get(topicName);
+    }
+
+    public Topic getTopic(String topicName) {
+        return topics.get(topicName);
+    }
+}
+
+public class PubSubDemo {
+    public static void main(String[] args) throws InterruptedException {
+        PubSubBroker broker = new PubSubBroker();
+        Topic topic = broker.createTopic("Orders");
+
+        Producer producer1 = new Producer("P1");
+        Producer producer2 = new Producer("P2");
+
+        Consumer consumer1 = new Consumer("C1");
+        Consumer consumer2 = new Consumer("C2");
+
+        topic.subscribe(consumer1);
+        topic.subscribe(consumer2);
+
+        producer1.publishMessage(topic, "Order1: Laptop");
+        producer2.publishMessage(topic, "Order2: Phone");
+
+        Thread.sleep(1000); // Allow consumers to process messages
+    }
+}
+
+----
+✅ Thread-safe with BlockingQueue and CopyOnWriteArrayList.
+✅ Asynchronous processing with ExecutorService.
+✅ A BlockingQueue is a thread-safe queue in Java that blocks the producer or consumer thread when the queue is full or empty.
+  If the queue is full, the producer waits before adding new elements.
+  If the queue is empty, the consumer waits until new elements are available.
+✅ CopyOnWriteArrayList is a thread-safe version of ArrayList in Java that creates a new copy of the list whenever it is modified (e.g., add, remove, update operations).
+  Reads are fast – Multiple threads can safely read the list without locks.
+  Writes are slow – Every modification creates a new list copy, which is expensive.
+  Best suited for read-heavy operations (e.g., caching, event listeners).
+✅ How CopyOnWriteArrayList Works?
+  When reading, threads access the list without locking.
+  When modifying, a new copy of the list is created, ensuring thread safety.
+  The old copy is never modified, so iterators won’t throw ConcurrentModificationException.

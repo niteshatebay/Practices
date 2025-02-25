@@ -1,6 +1,6 @@
 package com.practice;
 import java.util.*;
-import java.time.LocalDateTime;
+import java.time.*;
 
 enum VehicleType {
     CAR, BIKE;
@@ -56,7 +56,7 @@ class ParkingSlot {
             return 0.0;
         }
         LocalDateTime exitTime = LocalDateTime.now();
-        long hoursParked = java.time.Duration.between(entryTime, exitTime).toHours();
+        long hoursParked = Duration.between(entryTime, exitTime).toHours();
         if (hoursParked == 0) hoursParked = 1;  // Minimum 1-hour charge
 
         double totalCost = hoursParked * pricePerHour;

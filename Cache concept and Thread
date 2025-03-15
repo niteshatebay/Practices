@@ -62,3 +62,14 @@ public class ExecutorServiceExample {
     }
 }
 -----
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+LocalDateTime now = LocalDateTime.now();
+LocalDateTime mc = now.withHour(23).withMinute(33).withSecond(0).withNano(0);
+long delay = Duration.between(now, mc).toMillis();
+if(delay < 0) {
+    System.out.println("done1");
+    return;
+}
+scheduler.schedule(()->{
+    System.out.println("done2");
+}, delay, TimeUnit.MILLISECONDS);

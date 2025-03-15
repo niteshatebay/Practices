@@ -73,3 +73,18 @@ if(delay < 0) {
 scheduler.schedule(()->{
     System.out.println("done2");
 }, delay, TimeUnit.MILLISECONDS);
+----
+
+// Create a ScheduledExecutorService with a single-threaded pool
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+// Schedule the task to run every hour (initial delay 0, period 1 hour) and call a method foo()
+scheduler.scheduleAtFixedRate(() -> foo(), 0, 1, TimeUnit.HOURS);
+
+----
+
+// Create a ScheduledExecutorService with a single-threaded pool
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+// Schedule the task to run every minute (initial delay 0, period 1 minute)
+scheduler.scheduleAtFixedRate(() -> foo(), 0, 1, TimeUnit.MINUTES);

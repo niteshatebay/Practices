@@ -1,0 +1,90 @@
+public class User {
+    private String userId;
+    private String name;
+    private String email;
+    private String phoneNumber;
+    // Constructors, getters, and setters
+}
+
+public class Group {
+    private String groupId;
+    private String name;
+    private List<User> members;
+    // Constructors, getters, and setters
+}
+
+public abstract class Expense {
+    private String expenseId;
+    private double amount;
+    private User paidBy;
+    private List<Split> splits;
+    private String description;
+    private Date date;
+    // Constructors, getters, and setters
+    public abstract boolean validate();
+}
+
+public abstract class Split {
+    private User user;
+    private double amount;
+    // Constructors, getters, and setters
+}
+
+public class EqualSplit extends Split {
+    // Additional attributes and methods if necessary
+}
+
+public class ExactSplit extends Split {
+    // Additional attributes and methods if necessary
+}
+
+public class PercentSplit extends Split {
+    private double percent;
+    // Constructors, getters, and setters
+}
+
+public class ExpenseService {
+    private List<Expense> expenses;
+
+    public void addExpense(ExpenseType type, double amount, User paidBy, List<Split> splits, String description) {
+        Expense expense = ExpenseFactory.createExpense(type, amount, paidBy, splits, description);
+        expenses.add(expense);
+    }
+
+    // Other methods like editExpense, deleteExpense
+}
+
+public class ExpenseFactory {
+    public static Expense createExpense(ExpenseType type, double amount, User paidBy, List<Split> splits, String description) {
+        switch (type) {
+            case EQUAL:
+                return new EqualExpense(amount, paidBy, splits, description);
+            case EXACT:
+                return new ExactExpense(amount, paidBy, splits, description);
+            case PERCENT:
+                return new PercentExpense(amount, paidBy, splits, description);
+            default:
+                throw new IllegalArgumentException("Invalid expense type");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ExpenseService expenseService = new ExpenseService();
+
+        // Create users
+        User user1 = new User("Alice", "alice@example.com", "12345");
+        User user2 = new User("Bob", "bob@example.com", "67890");
+        User user3 = new User("Charlie", "charlie@example.com", "54321");
+
+        // Create an expense (Alice pays ₹300, split equally between Alice, Bob, and Charlie)
+        List<Split> splits = Arrays.asList(new EqualSplit(user1), new EqualSplit(user2), new EqualSplit(user3));
+        expenseService.addExpense(ExpenseType.EQUAL, 300, user1, splits, "Dinner");
+
+        // Print balance sheets
+        expenseService.printUserBalances(user1);
+        expenseService.printUserBalances(user2);
+        expenseService.printUserBalances(user3);
+    }
+}

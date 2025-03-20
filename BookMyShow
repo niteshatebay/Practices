@@ -1,0 +1,81 @@
+Core Features to Implement
+User Management → Register, login, view booking history.
+Movie Management → List movies, fetch details, reviews.
+Theater Management → Cities, theaters, screens, show timings.
+Seat Selection → Available vs. booked seats, pricing tiers (Gold, Silver, Platinum).
+Booking System → Reserve seats, payments, confirmation.
+Notifications → Ticket confirmation, reminders.
+Payment Handling → Integrate payment gateways.
+
+public class User {
+    private String userId;
+    private String name;
+    private String email;
+    private List<Booking> bookingHistory;
+
+    public void addBooking(Booking booking);
+}
+
+public class Movie {
+    private String movieId;
+    private String title;
+    private String genre;
+    private int duration;  // In minutes
+    private List<Show> shows;
+
+    public void addShow(Show show);
+}
+
+public class Theater {
+    private String theaterId;
+    private String name;
+    private String city;
+    private List<Screen> screens;
+    public void addScreen(Screen screen);
+}
+
+public class Screen {
+    private String screenId;
+    private String screenName;
+    private List<Show> shows;
+    private List<Seat> seats;
+
+    public void addShow(Show show);
+}
+
+
+public class Show {
+    private String showId;
+    private Movie movie;
+    private Screen screen;
+    private Date showTime;
+    private List<Seat> availableSeats;
+
+    public void bookSeat(Seat seat);
+}
+
+public class Seat {
+    private int seatNumber;
+    private SeatType type;
+    private boolean isBooked;
+
+    public void book();
+}
+
+enum SeatType {
+    REGULAR, GOLD, PLATINUM
+}
+
+public class Booking {
+    private String bookingId;
+    private User user;
+    private Show show;
+    private List<Seat> bookedSeats;
+    private PaymentStatus paymentStatus;
+
+    public void completePayment();
+}
+
+enum PaymentStatus {
+    PENDING, SUCCESS, FAILED
+}

@@ -1,0 +1,157 @@
+Singleton Pattern:-	Ensures a single Logger instance to maintain consistency.
+Factory Pattern:-	Used in AppenderFactory to create different types of log appenders dynamically.
+Strategy Pattern:-	Used in Formatter classes to allow different log formats dynamically.
+Observer Pattern (Optional Enhancement):-	Used if we want multiple appenders (console, file, database) to receive logs simultaneously
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Logger {
+    private static Logger instance;
+    private LogLevel level;
+    private List<Appender> appenders;
+
+    private Logger() {
+        this.level = LogLevel.INFO; // Default log level
+        this.appenders = new ArrayList<>();
+    }
+
+    public static synchronized Logger getInstance() {
+        if (instance == null) {
+            instance = new Logger();
+        }
+        return instance;
+    }
+
+    public void log(LogLevel logLevel, String message) {
+        if (logLevel.ordinal() >= level.ordinal()) {  // Log only if it's at or above the set level
+            LogMessage logMessage = new LogMessage(logLevel, message);
+            for (Appender appender : appenders) {
+                appender.append(logMessage);
+            }
+        }
+    }
+
+    public void addAppender(Appender appender) {
+        appenders.add(appender);
+    }
+
+    public void setLevel(LogLevel level) {
+        this.level = level;
+    }
+}
+
+---
+public enum LogLevel {
+    DEBUG, INFO, ERROR;
+}
+
+---
+import java.util.Date;
+
+public class LogMessage {
+    private LogLevel level;
+    private String message;
+    private Date timestamp;
+
+    public LogMessage(LogLevel level, String message) {
+        this.level = level;
+        this.message = message;
+        this.timestamp = new Date();
+    }
+
+    @Override
+    public String toString() {
+        return "[" + timestamp + "] [" + level + "] " + message;
+    }
+}
+
+----
+
+public abstract class Appender {
+    protected Formatter formatter;
+
+    public Appender(Formatter formatter) {
+        this.formatter = formatter;
+    }
+
+    public abstract void append(LogMessage logMessage);
+}
+
+---
+(Logs to Console)
+public class ConsoleAppender extends Appender {
+    public ConsoleAppender(Formatter formatter) {
+        super(formatter);
+    }
+
+    @Override
+    public void append(LogMessage logMessage) {
+        System.out.println(formatter.format(logMessage));
+    }
+}
+
+---
+(Logs to File)
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class FileAppender extends Appender {
+    private String filePath;
+
+    public FileAppender(String filePath, Formatter formatter) {
+        super(formatter);
+        this.filePath = filePath;
+    }
+
+    @Override
+    public void append(LogMessage logMessage) {
+        try (FileWriter writer = new FileWriter(filePath, true)) {
+            writer.write(formatter.format(logMessage) + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+----
+Formatter (Strategy Pattern)
+
+public interface Formatter {
+    String format(LogMessage logMessage);
+}
+
+public class SimpleFormatter implements Formatter {
+    @Override
+    public String format(LogMessage logMessage) {
+        return logMessage.toString();
+    }
+}
+
+-----
+public class AppenderFactory {
+    public static Appender createAppender(String type, String filePath, Formatter formatter) {
+        if (type.equalsIgnoreCase("console")) {
+            return new ConsoleAppender(formatter);
+        } else if (type.equalsIgnoreCase("file")) {
+            return new FileAppender(filePath, formatter);
+        }
+        throw new IllegalArgumentException("Invalid Appender Type");
+    }
+}
+
+----
+public class Main {
+    public static void main(String[] args) {
+        Logger logger = Logger.getInstance();  // Singleton instance
+
+        // Add Console and File Appenders
+        logger.addAppender(AppenderFactory.createAppender("console", null, new SimpleFormatter()));
+        logger.addAppender(AppenderFactory.createAppender("file", "app.log", new SimpleFormatter()));
+
+        // Log messages
+        logger.log(LogLevel.DEBUG, "This is a debug message.");
+        logger.log(LogLevel.INFO, "Application started.");
+        logger.log(LogLevel.ERROR, "Critical error occurred!");
+    }
+}
+

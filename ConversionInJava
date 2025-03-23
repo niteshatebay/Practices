@@ -29,3 +29,6 @@ int[] array = {1, 2, 2, 3, 4, 4, 5};
 
 // Remove duplicates using streams
 int[] uniqueArray = Arrays.stream(array).distinct().toArray();
+
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(a[1], b[1])); //min heap
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(b[1], a[1])); //max heap

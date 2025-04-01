@@ -1,0 +1,135 @@
+import java.util.*;
+
+// Base class for File and Directory
+abstract class FileSystemNode {
+    String name;
+    Directory parent;
+
+    public FileSystemNode(String name, Directory parent) {
+        this.name = name;
+        this.parent = parent;
+    }
+
+    public abstract void display(String indent);
+}
+
+// File class representing a file
+class File extends FileSystemNode {
+    String content;
+
+    public File(String name, Directory parent) {
+        super(name, parent);
+        this.content = "";
+    }
+
+    public void write(String content) {
+        this.content = content;
+    }
+
+    public String read() {
+        return content;
+    }
+
+    public void update(String newContent) {
+        this.content = newContent;
+    }
+
+    public void delete() {
+        if (parent != null) {
+            parent.remove(name);
+        }
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "File: " + name);
+    }
+}
+
+// Directory class representing a folder
+class Directory extends FileSystemNode {
+    List<FileSystemNode> children;
+
+    public Directory(String name, Directory parent) {
+        super(name, parent);
+        this.children = new ArrayList<>();
+    }
+
+    public void add(FileSystemNode node) {
+        children.add(node);
+    }
+
+    public void remove(String name) {
+        children.removeIf(node -> node.name.equals(name));
+    }
+
+    public FileSystemNode get(String name) {
+        for (FileSystemNode node : children) {
+            if (node.name.equals(name)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    public void updateName(String newName) {
+        this.name = newName;
+    }
+
+    public void delete() {
+        if (parent != null) {
+            parent.remove(name);
+        }
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "Directory: " + name);
+        for (FileSystemNode node : children) {
+            node.display(indent + "  ");
+        }
+    }
+}
+
+// File System
+public class FileSystem {
+    Directory root;
+
+    public FileSystem() {
+        root = new Directory("root", null);
+    }
+
+    public void display() {
+        root.display("");
+    }
+
+    public static void main(String[] args) {
+        FileSystem fs = new FileSystem();
+        Directory home = new Directory("home", fs.root);
+        fs.root.add(home);
+        
+        File file1 = new File("file1.txt", home);
+        home.add(file1);
+        file1.write("Hello, File System!");
+        
+        // CRUD operations
+        System.out.println("Before update:");
+        fs.display();
+        
+        file1.update("Updated content");
+        System.out.println("After file update:");
+        fs.display();
+        
+        home.updateName("new_home");
+        System.out.println("After directory rename:");
+        fs.display();
+        
+        file1.delete();
+        System.out.println("After file deletion:");
+        fs.display();
+        
+        home.delete();
+        System.out.println("After directory deletion:");
+        fs.display();
+    }
+}

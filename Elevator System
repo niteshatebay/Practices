@@ -1,0 +1,159 @@
+Elevator System: Design a system that controls multiple elevators in a building with multiple floors. The system should efficiently handle internal and external requests.
+Key Entities:-
+Elevator: Represents a physical elevator.
+Floor: Represents a floor in the building.
+Request: Represents a user request (external/internal).
+ElevatorController: Controls elevators and assigns requests.
+ElevatorSystem: The entry point managing the overall system.
+Enums: Define directions, status, etc.
+
+enum Direction {
+    UP,
+    DOWN,
+    IDLE
+}
+
+enum ElevatorStatus {
+    MOVING,
+    STOPPED,
+    IDLE
+}
+
+enum RequestType {
+    EXTERNAL,
+    INTERNAL
+}
+
+------------------------------
+class Request {
+    int sourceFloor;
+    int destinationFloor;
+    Direction direction;
+    RequestType type;
+
+    public Request(int sourceFloor, int destinationFloor, RequestType type) {
+        this.sourceFloor = sourceFloor;
+        this.destinationFloor = destinationFloor;
+        this.type = type;
+        this.direction = sourceFloor < destinationFloor ? Direction.UP : Direction.DOWN;
+    }
+}
+------------------------------
+class Elevator {
+    int id;
+    int currentFloor;
+    Direction direction;
+    ElevatorStatus status;
+    TreeSet<Integer> pendingStops;
+
+    public Elevator(int id) {
+        this.id = id;
+        this.currentFloor = 0;
+        this.direction = Direction.IDLE;
+        this.status = ElevatorStatus.IDLE;
+        this.pendingStops = new TreeSet<>();
+    }
+
+    public void move() {
+        if (direction == Direction.UP) {
+            currentFloor++;
+        } else if (direction == Direction.DOWN) {
+            currentFloor--;
+        }
+        checkAndStop();
+    }
+
+    public void checkAndStop() {
+        if (pendingStops.contains(currentFloor)) {
+            pendingStops.remove(currentFloor);
+            status = ElevatorStatus.STOPPED;
+            // Simulate door open/close
+            if (pendingStops.isEmpty()) {
+                direction = Direction.IDLE;
+                status = ElevatorStatus.IDLE;
+            }
+        }
+    }
+
+    public void addStop(int floor) {
+        pendingStops.add(floor);
+        updateDirection();
+    }
+
+    private void updateDirection() {
+        if (status == ElevatorStatus.IDLE && !pendingStops.isEmpty()) {
+            direction = pendingStops.first() > currentFloor ? Direction.UP : Direction.DOWN;
+            status = ElevatorStatus.MOVING;
+        }
+    }
+}
+
+------------------------------
+
+class ElevatorController {
+    List<Elevator> elevators;
+
+    public ElevatorController(int numberOfElevators) {
+        elevators = new ArrayList<>();
+        for (int i = 0; i < numberOfElevators; i++) {
+            elevators.add(new Elevator(i));
+        }
+    }
+
+    public void handleRequest(Request request) {
+        Elevator selected = findBestElevator(request);
+        if (request.type == RequestType.EXTERNAL) {
+            selected.addStop(request.sourceFloor);
+            selected.addStop(request.destinationFloor);
+        } else {
+            selected.addStop(request.destinationFloor);
+        }
+    }
+
+    private Elevator findBestElevator(Request request) {
+        Elevator best = null;
+        int minDistance = Integer.MAX_VALUE;
+        for (Elevator e : elevators) {
+            int distance = Math.abs(e.currentFloor - request.sourceFloor);
+            if (distance < minDistance && e.direction == Direction.IDLE) {
+                minDistance = distance;
+                best = e;
+            }
+        }
+        return best != null ? best : elevators.get(0); // fallback
+    }
+
+    public void stepSimulation() {
+        for (Elevator e : elevators) {
+            if (e.status == ElevatorStatus.MOVING) {
+                e.move();
+            }
+        }
+    }
+}
+
+------------------------------
+class ElevatorSystem {
+    ElevatorController controller;
+
+    public ElevatorSystem(int numberOfElevators) {
+        controller = new ElevatorController(numberOfElevators);
+    }
+
+    public void requestElevator(int from, int to) {
+        controller.handleRequest(new Request(from, to, RequestType.EXTERNAL));
+    }
+
+    public void step() {
+        controller.stepSimulation();
+    }
+}
+
+
+------------------------------
+
+ElevatorSystem system = new ElevatorSystem(3);
+system.requestElevator(0, 5);
+system.requestElevator(3, 0);
+system.step(); // move elevators one step
+

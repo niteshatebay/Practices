@@ -1,0 +1,114 @@
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+// Task class
+class Task {
+    private final String name;
+    private final LocalDateTime executionTime;
+    private final Runnable action;
+    private final boolean isPeriodic;
+    private final long periodInSeconds;
+
+    public Task(String name, LocalDateTime executionTime, Runnable action, boolean isPeriodic, long periodInSeconds) {
+        this.name = name;
+        this.executionTime = executionTime;
+        this.action = action;
+        this.isPeriodic = isPeriodic;
+        this.periodInSeconds = periodInSeconds;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public LocalDateTime getExecutionTime() {
+        return executionTime;
+    }
+
+    public Runnable getAction() {
+        return action;
+    }
+
+    public boolean isPeriodic() {
+        return isPeriodic;
+    }
+
+    public long getPeriodInSeconds() {
+        return periodInSeconds;
+    }
+}
+
+// TaskScheduler class
+class TaskScheduler {
+    private final ScheduledExecutorService scheduler;
+
+    public TaskScheduler(int poolSize) {
+        this.scheduler = Executors.newScheduledThreadPool(poolSize);
+    }
+
+    public void submitTask(Task task) {
+        long delay = Duration.between(LocalDateTime.now(), task.getExecutionTime()).toMillis();
+        if (delay < 0) {
+            System.out.println("Execution time for task \"" + task.getName() + "\" is in the past. Executing immediately.");
+            delay = 0;
+        }
+
+        if (task.isPeriodic()) {
+            scheduler.scheduleAtFixedRate(() -> {
+                System.out.println("Periodic task running: " + task.getName() + " at " + LocalDateTime.now());
+                task.getAction().run();
+            }, delay, task.getPeriodInSeconds() * 1000, TimeUnit.MILLISECONDS);
+            System.out.println("Scheduled periodic task: " + task.getName() + " to start at " + task.getExecutionTime());
+        } else {
+            scheduler.schedule(() -> {
+                System.out.println("One-time task running: " + task.getName() + " at " + LocalDateTime.now());
+                task.getAction().run();
+            }, delay, TimeUnit.MILLISECONDS);
+            System.out.println("Scheduled one-time task: " + task.getName() + " to run at " + task.getExecutionTime());
+        }
+    }
+
+    public void shutdown() {
+        scheduler.shutdown();
+    }
+}
+
+// Main class
+public class TaskSchedulerDemo {
+    public static void main(String[] args) {
+        TaskScheduler taskScheduler = new TaskScheduler(2);
+
+        // One-time task
+        Task oneTimeTask = new Task(
+                "OneTimeTask",
+                LocalDateTime.now().plusSeconds(5),
+                () -> System.out.println("One-time task is running."),
+                false,
+                0
+        );
+
+        // Periodic task
+        Task periodicTask = new Task(
+                "PeriodicTask",
+                LocalDateTime.now().plusSeconds(3),
+                () -> System.out.println("Periodic task is running."),
+                true,
+                5 // run every 5 seconds
+        );
+
+        // Submit tasks
+        taskScheduler.submitTask(oneTimeTask);
+        taskScheduler.submitTask(periodicTask);
+
+        // Allow time for tasks to run
+        try {
+            Thread.sleep(20000); // run for 20 seconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        taskScheduler.shutdown();
+    }
+}

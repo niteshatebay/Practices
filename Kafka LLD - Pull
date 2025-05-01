@@ -20,10 +20,10 @@ class Message {
     }
 }
 
-// Topic class with renamed messageQueue (previously allMessages)
+// Topic class
 class Topic {
     private final String name;
-    private final List<Message> messageQueue; // renamed from allMessages
+    private final List<Message> messageQueue;
 
     public Topic(String name) {
         this.name = name;
@@ -66,37 +66,27 @@ class Producer {
     }
 }
 
-// Pull-based Consumer
+// Pull-based Consumer using ScheduledExecutorService
 class Consumer {
     private final String consumerId;
-    private final int batchSize;
-    private final ConcurrentMap<String, Integer> topicOffsets;
-    private final ExecutorService executorService;
+    private final Map<String, Integer> topicOffsets = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    public Consumer(String consumerId, int batchSize) {
+    public Consumer(String consumerId) {
         this.consumerId = consumerId;
-        this.batchSize = batchSize;
-        this.topicOffsets = new ConcurrentHashMap<>();
-        this.executorService = Executors.newSingleThreadExecutor();
     }
 
-    public void subscribe(Topic topic, int startOffset) {
-        topicOffsets.put(topic.getName(), startOffset);
-        executorService.submit(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    int offset = topicOffsets.getOrDefault(topic.getName(), 0);
-                    List<Message> messages = topic.getMessagesFromOffset(offset, batchSize);
-                    for (Message msg : messages) {
-                        System.out.println("Consumer " + consumerId + " consumed: " + msg.getData());
-                        topicOffsets.computeIfPresent(topic.getName(), (k, v) -> v + 1);
-                    }
-                    Thread.sleep(1000); // Simulate polling interval
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+    public void subscribe(Topic topic, int offset, int batchSize) {
+        topicOffsets.put(topic.getName(), offset);
+
+        scheduler.scheduleAtFixedRate(() -> {
+            int currentOffset = topicOffsets.getOrDefault(topic.getName(), 0);
+            List<Message> messages = topic.getMessagesFromOffset(currentOffset, batchSize);
+            for (Message msg : messages) {
+                System.out.println("Consumer " + consumerId + " consumed: " + msg.getData());
             }
-        });
+            topicOffsets.computeIfPresent(topic.getName(), (k, v) -> v + messages.size());
+        }, 0, 1, TimeUnit.SECONDS); // Poll every 1 second
     }
 }
 
@@ -114,7 +104,7 @@ class PubSubBroker {
     }
 }
 
-// Main class
+// Main demo
 public class PubSubDemo {
     public static void main(String[] args) throws InterruptedException {
         PubSubBroker broker = new PubSubBroker();
@@ -123,11 +113,11 @@ public class PubSubDemo {
         Producer producer1 = new Producer("P1");
         Producer producer2 = new Producer("P2");
 
-        Consumer consumer1 = new Consumer("C1", 3); // Pulls 3 at a time
-        Consumer consumer2 = new Consumer("C2", 2); // Pulls 2 at a time
+        Consumer consumer1 = new Consumer("C1");
+        Consumer consumer2 = new Consumer("C2");
 
-        consumer1.subscribe(topic, 0); // Start from offset 0
-        consumer2.subscribe(topic, 0); // Start from offset 0
+        consumer1.subscribe(topic, 0, 3); // Offset 0, batch size 3
+        consumer2.subscribe(topic, 0, 2); // Offset 0, batch size 2
 
         producer1.publishMessage(topic, "Order1: Laptop");
         producer2.publishMessage(topic, "Order2: Phone");
@@ -136,6 +126,6 @@ public class PubSubDemo {
         producer1.publishMessage(topic, "Order5: Keyboard");
 
         Thread.sleep(5000); // Let consumers process messages
-        System.out.println("Demo done.");
+        System.out.println("Demo finished.");
     }
 }

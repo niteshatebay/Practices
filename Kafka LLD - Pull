@@ -1,0 +1,141 @@
+import java.util.*;
+import java.util.concurrent.*;
+
+// Message class
+class Message {
+    private final String id;
+    private final String data;
+
+    public Message(String id, String data) {
+        this.id = id;
+        this.data = data;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getData() {
+        return data;
+    }
+}
+
+// Topic class with renamed messageQueue (previously allMessages)
+class Topic {
+    private final String name;
+    private final List<Message> messageQueue; // renamed from allMessages
+
+    public Topic(String name) {
+        this.name = name;
+        this.messageQueue = Collections.synchronizedList(new ArrayList<>());
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void publish(Message message) {
+        messageQueue.add(message);
+    }
+
+    public List<Message> getMessagesFromOffset(int offset, int batchSize) {
+        synchronized (messageQueue) {
+            int end = Math.min(offset + batchSize, messageQueue.size());
+            if (offset >= end) return Collections.emptyList();
+            return new ArrayList<>(messageQueue.subList(offset, end));
+        }
+    }
+
+    public int getTotalMessages() {
+        return messageQueue.size();
+    }
+}
+
+// Producer class
+class Producer {
+    private final String producerId;
+
+    public Producer(String producerId) {
+        this.producerId = producerId;
+    }
+
+    public void publishMessage(Topic topic, String data) {
+        Message message = new Message(UUID.randomUUID().toString(), data);
+        System.out.println("Producer " + producerId + " published: " + data);
+        topic.publish(message);
+    }
+}
+
+// Pull-based Consumer
+class Consumer {
+    private final String consumerId;
+    private final int batchSize;
+    private final ConcurrentMap<String, Integer> topicOffsets;
+    private final ExecutorService executorService;
+
+    public Consumer(String consumerId, int batchSize) {
+        this.consumerId = consumerId;
+        this.batchSize = batchSize;
+        this.topicOffsets = new ConcurrentHashMap<>();
+        this.executorService = Executors.newSingleThreadExecutor();
+    }
+
+    public void subscribe(Topic topic, int startOffset) {
+        topicOffsets.put(topic.getName(), startOffset);
+        executorService.submit(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    int offset = topicOffsets.getOrDefault(topic.getName(), 0);
+                    List<Message> messages = topic.getMessagesFromOffset(offset, batchSize);
+                    for (Message msg : messages) {
+                        System.out.println("Consumer " + consumerId + " consumed: " + msg.getData());
+                        topicOffsets.computeIfPresent(topic.getName(), (k, v) -> v + 1);
+                    }
+                    Thread.sleep(1000); // Simulate polling interval
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
+}
+
+// PubSubBroker class
+class PubSubBroker {
+    private final ConcurrentHashMap<String, Topic> topics = new ConcurrentHashMap<>();
+
+    public Topic createTopic(String topicName) {
+        topics.putIfAbsent(topicName, new Topic(topicName));
+        return topics.get(topicName);
+    }
+
+    public Topic getTopic(String topicName) {
+        return topics.get(topicName);
+    }
+}
+
+// Main class
+public class PubSubDemo {
+    public static void main(String[] args) throws InterruptedException {
+        PubSubBroker broker = new PubSubBroker();
+        Topic topic = broker.createTopic("Orders");
+
+        Producer producer1 = new Producer("P1");
+        Producer producer2 = new Producer("P2");
+
+        Consumer consumer1 = new Consumer("C1", 3); // Pulls 3 at a time
+        Consumer consumer2 = new Consumer("C2", 2); // Pulls 2 at a time
+
+        consumer1.subscribe(topic, 0); // Start from offset 0
+        consumer2.subscribe(topic, 0); // Start from offset 0
+
+        producer1.publishMessage(topic, "Order1: Laptop");
+        producer2.publishMessage(topic, "Order2: Phone");
+        producer1.publishMessage(topic, "Order3: Monitor");
+        producer2.publishMessage(topic, "Order4: Mouse");
+        producer1.publishMessage(topic, "Order5: Keyboard");
+
+        Thread.sleep(5000); // Let consumers process messages
+        System.out.println("Demo done.");
+    }
+}

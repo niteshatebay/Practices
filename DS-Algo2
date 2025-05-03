@@ -49,3 +49,21 @@ public int subarraysDivByK(int[] nums, int k) {
     }
     return ans;
 }
+-------
+Given an array of integers, return the length of the longest subarray where the sum is divisible by K.
+public int subarraysDivByK(int[] nums, int k) {
+    HashMap<Integer, Integer> prefixMap = new HashMap<>();
+    prefixMap.put(0, -1); // remainder 0 at index -1
+    int sum = 0, ans = 0;
+    for (int i = 0; i < nums.length; i++) {
+        sum = (sum + nums[i]) % k;
+        if (sum < 0) sum += k;
+        if (prefixMap.containsKey(sum)) {
+            int prevIndex = prefixMap.get(sum);
+            ans = Math.max(ans, i - prevIndex);
+        } else {
+            prefixMap.put(sum, i); // store first occurrence
+        }
+    }
+    return ans;
+}

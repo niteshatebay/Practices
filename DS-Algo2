@@ -59,8 +59,7 @@ public int subarraysDivByK(int[] nums, int k) {
         sum = (sum + nums[i]) % k;
         if (sum < 0) sum += k;
         if (prefixMap.containsKey(sum)) {
-            int prevIndex = prefixMap.get(sum);
-            ans = Math.max(ans, i - prevIndex);
+            ans = Math.max(ans, i - prefixMap.get(sum));
         } else {
             prefixMap.put(sum, i); // store first occurrence
         }

@@ -28,3 +28,24 @@ class Solution {
         return dp[0][0];
     }
 }
+-----
+Subarray Sums Divisible by K
+Input: nums = [4,5,0,-2,-3,1], k = 5
+Output: 7
+Explanation: There are 7 subarrays with a sum divisible by k = 5:
+[4, 5, 0, -2, -3, 1], [5], [5, 0], [5, 0, -2, -3], [0], [0, -2, -3], [-2, -3]
+
+public int subarraysDivByK(int[] nums, int k) {
+    HashMap<Integer, Integer> prefixMap = new HashMap<>();
+    prefixMap.put(0, 1);
+    int sum = 0, ans = 0;
+    for(int i = 0; i < nums.length; i++) {
+        sum = (sum + nums[i]) % k;
+        if(sum < 0) sum += k;
+        if(prefixMap.containsKey(sum)) {
+            ans += prefixMap.get(sum);
+        }
+        prefixMap.put(sum, prefixMap.getOrDefault(sum, 0) + 1);
+    }
+    return ans;
+}

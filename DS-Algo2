@@ -66,3 +66,45 @@ public int subarraysDivByK(int[] nums, int k) {
     }
     return ans;
 }
+-------
+TC = O(n) 
+Shortest Subarray to be Removed to Make Array Sorted
+Input: arr = [1,2,3,10,4,2,3,5]
+Output: 3
+Explanation: The shortest subarray we can remove is [10,4,2] of length 3. The remaining elements after that will be [1,2,3,3,5] which are sorted.
+Another correct solution is to remove the subarray [3,10,4].
+
+public int findLengthOfShortestSubarray(int[] arr) {
+        int n = arr.length;
+
+        // find longest non-decreasing prefix
+        int left = 0, right = n - 1;
+        while (left + 1 < n && arr[left] <= arr[left + 1]) {
+            left++;
+        }
+
+        // if entire array is already sorted
+        if (left == n - 1) return 0;
+
+        // find longest non-decreasing suffix
+        while (right > 0 && arr[right] >= arr[right - 1]) {
+            right--;
+        }
+
+        //  removing either just the prefix or just the suffix.
+        int ans = Math.min(n - left - 1, right);
+
+        // use 2 pointers to find smallest middle part to remove
+        int start = 0, end = right;
+        while (start <= left && end < n) {
+            if (arr[start] <= arr[end]) {
+                ans = Math.min(ans, end - start - 1);
+                start++;
+            }
+            else {
+                end++;
+            }
+        }
+
+        return ans;
+    }

@@ -1,3 +1,65 @@
+mport java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.*;
+
+public class TokenBucketRateLimiter {
+    private final int maxTokens;
+    private final int refillAmount;
+    private final Map<String, Bucket> userBuckets = new ConcurrentHashMap<>();
+
+    public TokenBucketRateLimiter(int maxTokens, int refillAmount) {
+        this.maxTokens = maxTokens;
+        this.refillAmount = refillAmount;
+
+        // Schedule refill every 1 minute
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(this::refillAllBuckets, 1, 1, TimeUnit.MINUTES);
+    }
+
+    public boolean allowRequest(String userId) {
+        Bucket bucket = userBuckets.computeIfAbsent(userId, id -> new Bucket(maxTokens));
+        synchronized (bucket) {
+            if (bucket.tokens > 0) {
+                bucket.tokens--;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private void refillAllBuckets() {
+        for (Bucket bucket : userBuckets.values()) {
+            synchronized (bucket) {
+                bucket.tokens = Math.min(maxTokens, bucket.tokens + refillAmount);
+                System.out.println(LocalDateTime.now() + " - Refilled tokens to: " + bucket.tokens);
+            }
+        }
+    }
+
+    private static class Bucket {
+        int tokens;
+
+        Bucket(int initialTokens) {
+            this.tokens = initialTokens;
+        }
+    }
+
+    // Simple test
+    public static void main(String[] args) throws InterruptedException {
+        // Bucket capacity = 10, refill = 3 tokens per minute
+        TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(10, 3);
+        String userId = "user123";
+
+        // Simulate 15 requests (one every 4 seconds)
+        for (int i = 1; i <= 15; i++) {
+            boolean allowed = limiter.allowRequest(userId);
+            System.out.println(LocalDateTime.now() + " - Request " + i + ": " + (allowed ? "Allowed" : "Rate Limited"));
+            Thread.sleep(4000); // Wait 4 seconds
+        }
+    }
+}
+
+----------
 package com.telio;
 
 import java.time.Duration;

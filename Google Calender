@@ -1,0 +1,97 @@
+
+// ---------- ENUMS ----------
+enum RSVPStatus {
+    INVITED, ACCEPTED, DECLINED, MAYBE;
+}
+
+enum EventStatus {
+    ACTIVE, CANCELLED;
+}
+
+// ---------- ENTITIES ----------
+class User {
+    UUID id;
+    String name;
+    String email;
+
+    public User(String name, String email) {}
+}
+
+class Attendee {
+    UUID id;
+    User user;
+    RSVPStatus status;
+    LocalDateTime respondedAt;
+
+    public Attendee(User user) {}
+
+    public void respond(RSVPStatus status) {}
+}
+
+class Event {
+    UUID id;
+    String title;
+    String description;
+    String location;
+    User organizer;
+    LocalDateTime startTime;
+    LocalDateTime endTime;
+    String recurrenceRule;
+    EventStatus status;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+    List<Attendee> attendees;
+
+    public Event(String title, String description, String location, User organizer,
+                 LocalDateTime startTime, LocalDateTime endTime, String recurrenceRule) {}
+
+    public void addAttendee(User user) {}
+
+    public void cancel() {}
+
+    public void update(String title, String description, LocalDateTime newStart, LocalDateTime newEnd) {}
+}
+
+class Calendar {
+    UUID id;
+    User owner;
+    List<Event> events;
+
+    public Calendar(User owner) {}
+
+    public void addEvent(Event event) {}
+
+    public List<Event> getAllEvents() {
+        return null;
+    }
+
+    public List<Event> getUpcomingEvents() {
+        return null;
+    }
+}
+
+class CalendarManager {
+    Map<UUID, Calendar> userCalendars;
+
+    public Calendar getOrCreateCalendar(User user) {
+        return null;
+    }
+
+    public Event createEvent(User organizer, String title, String description, String location,
+                             LocalDateTime start, LocalDateTime end, String recurrenceRule,
+                             List<User> attendees) {
+        return null;
+    }
+
+    public boolean cancelEvent(User organizer, UUID eventId) {
+        return false;
+    }
+
+    public List<Event> getUserEvents(User user) {
+        return null;
+    }
+
+    public boolean respondToEvent(UUID eventId, User user, RSVPStatus response) {
+        return false;
+    }
+}

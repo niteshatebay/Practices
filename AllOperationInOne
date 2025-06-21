@@ -1,0 +1,124 @@
+To achieve O(1) time complexity for all operations (incrementByOne, decrementByOne, getMaxKey, getMinKey), we need a combination of:
+HashMap to map keys to their count.
+Doubly Linked List of Nodes, where each node represents a frequency and contains a Set<String> of keys with that frequency.
+Two pointers to the head (min freq) and tail (max freq) nodes.
+
+import java.util.*;
+
+public class FrequencyTracker {
+
+    private class Node {
+        int count;
+        Set<String> keys = new HashSet<>();
+        Node prev, next;
+
+        Node(int count) {
+            this.count = count;
+        }
+
+        Node() {} // dummy node
+    }
+
+    private Map<String, Integer> keyToCount = new HashMap<>();
+    private Map<Integer, Node> countToNode = new HashMap<>();
+    private Node head = new Node(); // dummy head
+    private Node tail = new Node(); // dummy tail
+
+    public FrequencyTracker() {
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    public void incrementByOne(String key) {
+        int prevCount = keyToCount.getOrDefault(key, 0);
+        int newCount = prevCount + 1;
+        keyToCount.put(key, newCount);
+
+        Node prevNode = countToNode.get(prevCount);
+        Node newNode = countToNode.get(newCount);
+
+        if (newNode == null) {
+            newNode = new Node(newCount);
+            countToNode.put(newCount, newNode);
+
+            Node insertAfter = (prevNode != null) ? prevNode : head;
+            newNode.next = insertAfter.next;
+            newNode.prev = insertAfter;
+            insertAfter.next.prev = newNode;
+            insertAfter.next = newNode;
+        }
+
+        newNode.keys.add(key);
+
+        if (prevNode != null) {
+            prevNode.keys.remove(key);
+            if (prevNode.keys.isEmpty()) {
+                prevNode.prev.next = prevNode.next;
+                prevNode.next.prev = prevNode.prev;
+                countToNode.remove(prevCount);
+            }
+        }
+    }
+
+    public void decrementByOne(String key) {
+        Integer count = keyToCount.get(key);
+        if (count == null) return;
+
+        Node currNode = countToNode.get(count);
+        int newCount = count - 1;
+
+        if (newCount > 0) {
+            Node newNode = countToNode.get(newCount);
+            if (newNode == null) {
+                newNode = new Node(newCount);
+                countToNode.put(newCount, newNode);
+
+                Node insertBefore = currNode;
+                newNode.next = insertBefore;
+                newNode.prev = insertBefore.prev;
+                insertBefore.prev.next = newNode;
+                insertBefore.prev = newNode;
+            }
+            newNode.keys.add(key);
+            keyToCount.put(key, newCount);
+        } else {
+            keyToCount.remove(key);
+        }
+
+        currNode.keys.remove(key);
+        if (currNode.keys.isEmpty()) {
+            currNode.prev.next = currNode.next;
+            currNode.next.prev = currNode.prev;
+            countToNode.remove(count);
+        }
+    }
+
+    public String getMaxKey() {
+        return tail.prev != head ? tail.prev.keys.iterator().next() : null;
+    }
+    
+    public String getMinKey() {
+        return head.next != tail ? head.next.keys.iterator().next() : null;
+    }
+
+  public static void main(String[] args) {
+        FrequencyTracker tracker = new FrequencyTracker();
+
+        tracker.incrementByOne("a");
+        tracker.incrementByOne("b");
+        tracker.incrementByOne("a");
+        tracker.incrementByOne("c");
+        tracker.incrementByOne("c");
+        tracker.incrementByOne("c");
+
+        System.out.println("Max Key: " + tracker.getMaxKey()); // c
+        System.out.println("Min Key: " + tracker.getMinKey()); // b
+
+        tracker.decrementByOne("c");
+        tracker.decrementByOne("c");
+        tracker.decrementByOne("c"); // removes "c"
+
+        System.out.println("Max Key after dec: " + tracker.getMaxKey()); // a
+        System.out.println("Min Key after dec: " + tracker.getMinKey()); // b
+    }
+}

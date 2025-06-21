@@ -9,7 +9,7 @@ public class FrequencyTracker {
 
     private class Node {
         int count;
-        Set<String> keys = new HashSet<>();
+        Set<String> keys = new LinkedHashSet<>();
         Node prev, next;
 
         Node(int count) {

@@ -122,3 +122,21 @@ public class FrequencyTracker {
         System.out.println("Min Key after dec: " + tracker.getMinKey()); // b
     }
 }
+
+
+
+-----
+public List<String> getTopKKeys(int k) {
+    List<String> result = new ArrayList<>();
+    Node current = tail.prev;
+
+    while (current != head && result.size() < k) {
+        for (String key : current.keys) {
+            result.add(key);
+            if (result.size() == k) break;
+        }
+        current = current.prev;
+    }
+
+    return result;
+}

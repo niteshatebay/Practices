@@ -14,7 +14,10 @@ public class TransactionalCache {
     // Add or update a key-value pair
     public void put(String key, String value) {
         if (!transactionStack.isEmpty()) {
-            transactionStack.peek().put(key, cache.get(key));  // Save old value before modification
+            Map<String, String> currentTransaction = transactionStack.peek();
+            if (!currentTransaction.containsKey(key)) {
+                currentTransaction.put(key, cache.get(key));  // Save original value only once
+            }
         }
         cache.put(key, value);
     }
@@ -28,7 +31,10 @@ public class TransactionalCache {
     public void delete(String key) {
         if (cache.containsKey(key)) {
             if (!transactionStack.isEmpty()) {
-                transactionStack.peek().put(key, cache.get(key)); // Save old value before deletion
+                Map<String, String> currentTransaction = transactionStack.peek();
+                if (!currentTransaction.containsKey(key)) {
+                    currentTransaction.put(key, cache.get(key));  // Save original value only once
+                }
             }
             cache.remove(key);
         }

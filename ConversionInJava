@@ -36,7 +36,12 @@ public class Test {
         System.out.println(list);
     }
 }
-
+--------
+List<Integer> list = Arrays.asList(5,2,6,3,1);
+Collections.sort(list);
+System.out.println(list);
+Collections.sort(list, Collections.reverseOrder());
+System.out.println(list);
 --------
 
 int[] arr = {5,4,6,1,8};

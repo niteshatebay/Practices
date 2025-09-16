@@ -1,3 +1,44 @@
+class Stat {
+    double avg;
+    int count;
+
+    public Stat(double avg, int count) {
+        this.avg = avg;
+        this.count = count;
+    }
+
+    @Override
+    public String toString() {
+        return "Stat{" +
+                "avg=" + avg +
+                ", count=" + count +
+                '}';
+    }
+}
+
+class SortComparator implements Comparator<Stat> {
+    @Override
+    public int compare(Stat s1, Stat s2) {
+        int comp = Integer.compare(s2.count, s1.count);
+        if(comp == 0) {
+            comp = Double.compare(s2.avg, s1.avg);
+        }
+        return comp;
+    }
+}
+public class Test {
+    public static void main(String[] args) {
+        List<Stat> list = new ArrayList<>();
+        list.add(new Stat(1.2, 2));
+        list.add(new Stat(5.2, 3));
+        list.add(new Stat(5.2, 5));
+        list.sort(new SortComparator());
+        System.out.println(list);
+    }
+}
+
+--------
+
 int[] arr = {5,4,6,1,8};
 int[] descArr = Arrays.stream(arr).boxed().sorted(Collections.reverseOrder()).mapToInt(Integer::intValue).toArray();
 System.out.println(Arrays.toString(descArr));

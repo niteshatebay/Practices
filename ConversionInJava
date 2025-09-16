@@ -1,3 +1,18 @@
+count tracks how many integers have arrived.
+avg is updated using the incremental mean formula:
+newAvg = oldAvg + (value − oldAvg)/count
+
+class Test {	​
+    private final AtomicInteger count = new AtomicInteger(0);
+    private volatile double avg = 0.0;
+    
+    // Call this method whenever a new integer arrives
+    public void add(int value) {
+        int currentCount = count.incrementAndGet();
+        avg += (value - avg) / currentCount;
+    }
+}
+------
 class Stat {
     double avg;
     int count;

@@ -1,0 +1,39 @@
+public class Test {
+    private int number = 1;
+    private final int max = 100;
+    private final Object lock = new Object();
+
+    public static void main(String[] args) {
+        Test test = new Test();
+        Thread t0 = new Thread(() -> test.printNumbers(0), "Thread-0");
+        Thread t1 = new Thread(() -> test.printNumbers(1), "Thread-1");
+        Thread t2 = new Thread(() -> test.printNumbers(2), "Thread-2");
+
+        t0.start();
+        t1.start();
+        t2.start();
+    }
+
+    private void printNumbers(int threadId) {
+        while (true) {
+            synchronized (lock) {
+                while (number <= max && number % 3 != threadId) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
+
+                if (number > max) {
+                    lock.notifyAll(); // let others exit
+                    break;
+                }
+
+                System.out.println("Thread: " + threadId + " - " + number++);
+                lock.notifyAll();
+            }
+        }
+    }
+}

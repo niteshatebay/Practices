@@ -1,0 +1,156 @@
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
+class MeetingRoom {
+    private final long id;
+    private final String name;
+    private final int capacity;
+
+    public MeetingRoom(long id, String name, int capacity) {
+        this.id = id;
+        this.name = name;
+        this.capacity = capacity;
+    }
+    public long getId() {
+        return id;
+    }
+}
+
+class User {
+    private final long id;
+    private final String name;
+    private final String email;
+
+    public User(long id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+}
+
+class Booking {
+    private final long id;
+    private final MeetingRoom room;
+    private final User user;
+    private final LocalDateTime startTime;
+    private final LocalDateTime endTime;
+    private final String title;
+
+    public Booking(long id, MeetingRoom room, User user, LocalDateTime startTime, LocalDateTime endTime, String title) {
+        this.id = id;
+        this.room = room;
+        this.user = user;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.title = title;
+    }
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+}
+
+class BookingManager {
+    private final Map<Long, List<Booking>> roomBookings = new HashMap<>();
+    private final AtomicLong bookingIdGenerator = new AtomicLong(1);
+
+    /**
+     * Books a meeting room.
+     * - Ensures start < end
+     * - Ensures booking within 24 hours
+     * - Prevents overlapping bookings for the same room
+     */
+    public Booking bookRoom(MeetingRoom room, User user, LocalDateTime start, LocalDateTime end, String title) {
+        validateTimeRange(start, end);
+
+        synchronized (getLockForRoom(room.getId())) {
+            List<Booking> existing = roomBookings.getOrDefault(room.getId(), new ArrayList<>());
+
+            for (Booking b : existing) {
+                if (isOverlapping(start, end, b.getStartTime(), b.getEndTime())) {
+                    throw new RuntimeException("Room already booked for this time slot: " + b);
+                }
+            }
+
+            Booking booking = new Booking(bookingIdGenerator.getAndIncrement(), room, user, start, end, title);
+            existing.add(booking);
+            roomBookings.put(room.getId(), existing);
+            return booking;
+        }
+    }
+
+    /** Check overlap between two time ranges **/
+    private boolean isOverlapping(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
+        return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+
+    /** Validates that start < end **/
+    private void validateTimeRange(LocalDateTime start, LocalDateTime end) {
+        if (!start.isBefore(end)) {
+            throw new IllegalArgumentException("Start time must be before end time.");
+        }
+    }
+
+    /** Returns bookings for a room **/
+    public List<Booking> getBookingsForRoom(MeetingRoom room) {
+        return roomBookings.getOrDefault(room.getId(), Collections.emptyList());
+    }
+
+    /** Separate lock per room for thread-safety **/
+    private Object getLockForRoom(Long roomId) {
+        return roomBookings.computeIfAbsent(roomId, k -> new ArrayList<>());
+    }
+}
+
+public class MeetingRoomManager {
+    public static void main(String[] args) {
+        BookingManager manager = new BookingManager();
+
+        MeetingRoom room1 = new MeetingRoom(1, "Conference Room A", 10);
+        User user1 = new User(101, "Alice", "alice@gmail.com");
+        User user2 = new User(102, "Bob", "bob@gmail.com");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start1 = now.withHour(10).withMinute(0);
+        LocalDateTime end1 = now.withHour(11).withMinute(0);
+
+        // Successful booking
+        Booking booking1 = manager.bookRoom(room1, user1, start1, end1, "Team Sync");
+        System.out.println("Booked: " + booking1);
+
+        // Attempt overlapping booking
+        try {
+            manager.bookRoom(room1, user2, now.withHour(10).withMinute(30), now.withHour(11).withMinute(30), "Project Meeting");
+        } catch (Exception e) {
+            System.out.println("Conflict: " + e.getMessage());
+        }
+
+        // Non-overlapping booking
+        Booking booking2 = manager.bookRoom(room1, user2, now.withHour(12), now.withHour(13), "Client Call");
+        System.out.println("Booked: " + booking2);
+
+        // Display all bookings
+        System.out.println("\nAll Bookings for " + room1.getId() + ":");
+        manager.getBookingsForRoom(room1).forEach(System.out::println);
+    }
+}
+--------------
+
+        LocalDateTime startTime = LocalDateTime.now().withHour(11).withMinute(30).withSecond(0).withNano(0);
+        System.out.println(startTime);
+
+        LocalDateTime endTime = LocalDateTime.now().withHour(12).withMinute(30).withSecond(0).withNano(0);
+        System.out.println(endTime);
+
+        LocalDateTime startTime2 = LocalDateTime.now().withHour(12).withMinute(0).withSecond(0).withNano(0);
+        System.out.println(startTime2);
+
+        LocalDateTime endTime2 = LocalDateTime.now().withHour(13).withMinute(0).withSecond(0).withNano(0);
+        System.out.println(endTime2);
+
+
+        boolean isOverlapped = isOverlapping(startTime, endTime, startTime2, endTime2);
+        System.out.println(isOverlapped);

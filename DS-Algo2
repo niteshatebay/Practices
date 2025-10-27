@@ -135,3 +135,62 @@ public List<List<Integer>> kSmallestPairs(int[] nums1, int[] nums2, int k) {
     }
     return ans;
 }
+----------
+Get first non repeating char
+
+import java.util.*;
+public class Main {
+    static class Node {
+        boolean isRepeated;
+        Node prev;
+        Node next;
+        char c;
+        public Node() {
+        }
+        public Node(char c) {
+            this.c = c;
+        }
+    }
+    Map<Character, Node> map;
+    Node head = new Node();
+    Node tail = new Node();
+     public Main() {
+         map = new HashMap<>();
+         head.next = tail;
+         tail.prev = head;
+     }
+
+     private void insert(char c) {
+         if(map.containsKey(c)) {
+             Node node = map.get(c);
+             if(node.isRepeated) {
+                 return;
+             }
+             node.prev.next = node.next;
+             node.next.prev = node.prev;
+             node.isRepeated = true;
+             return;
+         }
+         Node newNode = new Node(c);
+         map.put(c, newNode);
+         newNode.prev = tail.prev;
+         newNode.next = tail;
+         tail.prev.next = newNode;
+         tail.prev = newNode;
+     }
+
+     private Character getFirstChar() {
+         return head.next != tail ? head.next.c : null;
+     }
+
+    public static void main(String[] args) {
+        Main m = new Main();
+        m.insert('A');
+        m.insert('B');
+        m.insert('C');
+        System.out.println(m.getFirstChar()); //A
+        m.insert('A');
+        m.insert('B');
+        System.out.println(m.getFirstChar()); //C
+    }
+}
